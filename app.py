@@ -74,6 +74,27 @@ if 'config' not in st.session_state:
 if 'boxes' not in st.session_state:
     st.session_state.boxes = [str(uuid.uuid4())]
 
+# --- NEW: GLOBAL PASSWORD PROTECTION ---
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("🔒 Access Restricted")
+    st.markdown("Please enter the passcode to access the EduTap Asset Generator.")
+    
+    app_password = st.text_input("Passcode", type="password")
+    
+    if st.button("Unlock App"):
+        if app_password == "sale@321":
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Incorrect Passcode. Access Denied.")
+            
+    # This stops the entire rest of the app from loading until unlocked
+    st.stop() 
+
+
 def add_box():
     if len(st.session_state.boxes) < 6:
         st.session_state.boxes.append(str(uuid.uuid4()))
@@ -171,8 +192,8 @@ for i, box_id in enumerate(st.session_state.boxes):
     with col3:
         subject = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub_{box_id}")
     with col4:
-        default_offs = [opt for opt in ["Gold", "Silver", "Test Series"] if opt in st.session_state.config["OFFERINGS"]]
-        offerings = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=default_offs, max_selections=4, key=f"off_{box_id}")
+        # Changed default to [] so the field is empty by default
+        offerings = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off_{box_id}")
     with col5:
         st.write("&nbsp;") 
         st.write("&nbsp;") 
@@ -277,5 +298,3 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                 
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
-
-
