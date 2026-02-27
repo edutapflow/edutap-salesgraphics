@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/textfit/2.4.0/textFit.min.js"></script>
+    <style>
+        @page { margin: 0; }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        
+        html, body { 
+            width: 1080px !important; height: 1080px !important; 
+            margin: 0 !important; padding: 0 !important; overflow: visible !important; 
+            font-family: 'Montserrat', sans-serif; 
+            background: transparent !important; 
+            position: absolute !important; top: 0 !important; left: 0 !important;
+        }
+        
+        .canvas {
+            position: absolute !important; top: 0 !important; left: 0 !important; 
+            width: 1080px !important; height: 1080px !important;
+            background: transparent !important;
+        }
+
+        .text-area { position: absolute; display: flex; align-items: center; justify-content: center; font-weight: 800; color: #FFE600; z-index: 9999; }
+
+        {% if data.discount_type == "Flat" %}
+        .flat-only { left: 380.59px; top: 464.97px; width: 336.59px; height: 137.09px; font-size: 110px; letter-spacing: -2px; }
+        {% else %}
+        .flat-split { left: 142px; top: 497px; width: 249px; height: 103px; font-size: 85px; letter-spacing: -2px;}
+        .add-split { left: 685px; top: 497px; width: 249px; height: 103px; font-size: 85px; letter-spacing: -2px;}
+        {% endif %}
+
+        /* RESTORED: Footer is locked back to original 986px */
+        .coupon-code { 
+            left: 282px; top: 986px; width: 132px; height: 43px; 
+            font-size: 22px !important; color: #FFFFFF !important; 
+            background-color: #E31E24 !important; border-radius: 6px; 
+        }
+        
+        .validity { 
+            left: 421px; top: 986px; width: 630px; height: 43px; 
+            font-size: 24px !important; color: #000000 !important; 
+            background-color: #FFFFFF !important; 
+            justify-content: flex-start; padding-left: 10px;
+        }
+
+        /* THE SQUEEZE: Top pushed down to 635px, height shrunk to 310px to create gaps natively */
+        .course-container { position: absolute; left: 17px; top: 635px; width: 1045px; height: 310px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 15px; }
+        .course-box { display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; width: {% if data.courses|length > 3 %}calc(33.333% - 15px){% else %}calc(1045px / {{ data.courses|length }} - 15px){% endif %}; max-width: 330px; height: {% if data.courses|length > 3 %}160px{% else %}100%{% endif %}; box-shadow: 0px 4px 10px rgba(0,0,0,0.3); background-color: #003B5C; }
+
+        .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 4px; text-align: center; font-weight: 800; line-height: 1.1; }
+        .yellow-strip { background-color: #FFDE00; color: #000000; flex: 1.5; text-transform: uppercase; }
+        .black-strip { background-color: #000000; color: #FFFFFF; flex: 1; }
+        .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
+        
+        /* Retained the padding fix so text doesn't cut */
+        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.5; width: 100%; padding: 2px 6px; display: flex; align-items: center; justify-content: center; }
+        .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;}
+    </style>
+</head>
+<body>
+    <div class="canvas">
+        {% if data.discount_type == "Flat" %}
+            <div class="text-area flat-only">{{ data.flat_val }}%</div>
+        {% else %}
+            <div class="text-area flat-split">{{ data.flat_val }}%</div>
+            <div class="text-area add-split">{{ data.add_val }}%</div>
+        {% endif %}
+        
+        <div class="text-area coupon-code">{{ data.coupon_code }}</div>
+        <div class="text-area validity">{% if data.use_expiry %}{{ data.expiry_text }}{% else %}{{ data.validity_text }}{% endif %}</div>
+
+        <div class="course-container">
+            {% for course in data.courses %}
+                {% set exam_clean = course.exam | upper | replace('GRADE A/B', 'GRADE&nbsp;A/B') | replace('GRADE A', 'GRADE&nbsp;A') | replace('GRADE B', 'GRADE&nbsp;B') %}
+                <div class="course-box">
+                    {% if course.exam and course.stream and course.subject %}
+                        <div class="strip-container yellow-strip"><div class="fit-text title">{{ exam_clean | safe }}</div></div>
+                        <div class="strip-container black-strip"><div class="fit-text sub">{{ course.stream }}</div></div>
+                        <div class="strip-container white-strip"><div class="fit-text sub">{{ course.subject }}</div></div>
+                    {% elif course.exam and course.subject and not course.stream %}
+                        <div class="strip-container yellow-strip"><div class="fit-text title">{{ exam_clean | safe }}</div></div>
+                        <div class="strip-container white-strip"><div class="fit-text sub">{{ course.subject }}</div></div>
+                    {% elif course.exam and course.stream and not course.subject %}
+                        <div class="strip-container yellow-strip"><div class="fit-text title">{{ exam_clean | safe }}</div></div>
+                        <div class="strip-container white-strip"><div class="fit-text sub">{{ course.stream }}</div></div>
+                    {% elif course.exam and not course.stream and not course.subject %}
+                        <div class="strip-container yellow-strip"><div class="fit-text title">{{ exam_clean | safe }}</div></div>
+                    {% elif not course.exam and course.subject and course.stream %}
+                        <div class="strip-container yellow-strip"><div class="fit-text title">{{ course.subject }}</div></div>
+                        <div class="strip-container white-strip"><div class="fit-text sub">{{ course.stream }}</div></div>
+                    {% elif not course.exam and course.subject and not course.stream %}
+                        <div class="strip-container yellow-strip"><div class="fit-text title">{{ course.subject }}</div></div>
+                    {% elif not course.exam and not course.subject and course.stream %}
+                        <div class="strip-container yellow-strip"><div class="fit-text title">{{ course.stream }}</div></div>
+                    {% endif %}
+                    <div class="blue-offer-box"><div class="fit-text offer">{{ course.offerings|join(', ') }}</div></div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div style="position: absolute; bottom: 0; right: 0; width: 1px; height: 1px; background: rgba(0,0,0,0.01);"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // 1. Run text sizing normally
+            textFit(document.getElementsByClassName('title'), {multiLine: true, maxFontSize: 45, minFontSize: 16});
+            textFit(document.getElementsByClassName('sub'), {multiLine: true, maxFontSize: 28, minFontSize: 12});
+            
+            // Retained ceiling fix for "Series"
+            textFit(document.getElementsByClassName('offer'), {multiLine: true, maxFontSize: 22, minFontSize: 12});
+
+            // 2. Uniformity Logic: Find the smallest size and force all peers to match it
+            function equalizeSizes(targetClass) {
+                var nodes = document.querySelectorAll('.' + targetClass + ' .textFitted');
+                if (nodes.length <= 1) return; 
+                
+                var minPx = 999;
+                nodes.forEach(function(node) {
+                    var size = parseFloat(window.getComputedStyle(node).fontSize);
+                    if (size < minPx) { minPx = size; }
+                });
+                
+                nodes.forEach(function(node) {
+                    node.style.fontSize = minPx + 'px';
+                });
+            }
+
+            // 3. Execute symmetry script across all strips
+            equalizeSizes('title');
+            equalizeSizes('sub');
+            equalizeSizes('offer');
+        });
+    </script>
+</body>
+</html>
