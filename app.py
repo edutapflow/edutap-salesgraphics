@@ -122,8 +122,7 @@ with st.sidebar:
         st.error("Incorrect Password.")
 
 # --- MAIN DASHBOARD ---
-st.title("EduTap Campaign Asset Generator")
-st.markdown("Automated generation pipeline for high-fidelity marketing graphics.")
+st.title("EduTap Sale Grapics Generator")
 
 # --- SECTION 1: Campaign Details ---
 st.header("Campaign Configuration")
@@ -198,7 +197,7 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
     if len(validity_dates) < 2:
         st.error("Action Required: Please select both a Start Date and End Date for the validity period before generating.")
     else:
-        with st.spinner("Processing templates and compiling visual assets. Please wait..."):
+        with st.spinner("Making Graphics. Please wait..."):
             data_payload = {
                 "discount_type": discount_type, "flat_val": flat_val, "add_val": add_val,
                 "coupon_code": coupon_code, "validity_text": validity_text,
@@ -264,7 +263,7 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                         # Delete the raw image from the server to save space
                         os.remove(final_output_path) 
                 
-                st.success("✅ Rendering Complete! Your images have been packaged and the server has been securely wiped.")
+                st.success("✅ Done. Note: Don't Your Files Before Refershing or Generating Next Graphics")
                 
                 # Inject the download button
                 safe_camp_name = sale_name.replace(" ", "_")
@@ -278,3 +277,4 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                 
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
+
