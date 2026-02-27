@@ -16,6 +16,9 @@ from jinja2 import Environment, FileSystemLoader
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
+# --- UI Configuration (MUST BE THE VERY FIRST STREAMLIT COMMAND) ---
+st.set_page_config(page_title="EduTap Asset Generator", layout="wide", initial_sidebar_state="collapsed")
+
 # --- Cloud Server Chrome Installer ---
 # This ensures Streamlit Cloud installs the headless browser on boot
 @st.cache_resource
@@ -63,9 +66,6 @@ def load_config():
 def save_config(config):
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f)
-
-# --- UI Configuration ---
-st.set_page_config(page_title="EduTap Asset Generator", layout="wide", initial_sidebar_state="collapsed")
 
 # Load session state variables
 if 'config' not in st.session_state:
