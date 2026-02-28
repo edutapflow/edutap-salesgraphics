@@ -146,7 +146,7 @@ with st.sidebar:
 st.title("EduTap Sale Grapics Generator")
 
 # --- SECTION 1: Campaign Details ---
-st.header("Campaign Configuration")
+st.header("Sale Configuration")
 with st.container():
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -298,3 +298,4 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                 
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
+
