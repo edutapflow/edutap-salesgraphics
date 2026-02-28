@@ -146,7 +146,7 @@ with st.sidebar:
 st.title("EduTap Sale Grapics Generator")
 
 # --- SECTION 1: Campaign Details ---
-st.header("Sale Configuration")
+st.header("Campaign Configuration")
 with st.container():
     col1, col2, col3 = st.columns(3)
     with col1:
@@ -171,10 +171,11 @@ with st.container():
         validity_text = ""
         if len(validity_dates) == 2:
             start_d, end_d = validity_dates
+            # Changed %B (Full Month) to %b (Short Month)
             if start_d.month == end_d.month and start_d.year == end_d.year:
-                validity_text = f"*Valid: {start_d.day} to {end_d.day} {start_d.strftime('%B %Y')}*"
+                validity_text = f"*Valid: {start_d.day} to {end_d.day} {start_d.strftime('%b %Y')}*"
             else:
-                validity_text = f"*Valid: {start_d.day} {start_d.strftime('%B')} to {end_d.day} {end_d.strftime('%B %Y')}*"
+                validity_text = f"*Valid: {start_d.day} {start_d.strftime('%b')} to {end_d.day} {end_d.strftime('%b %Y')}*"
 
 st.divider()
 
@@ -192,7 +193,7 @@ for i, box_id in enumerate(st.session_state.boxes):
     with col3:
         subject = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub_{box_id}")
     with col4:
-        # Changed default to [] so the field is empty by default
+        default_offs = [opt for opt in ["Gold", "Silver", "Test Series"] if opt in st.session_state.config["OFFERINGS"]]
         offerings = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off_{box_id}")
     with col5:
         st.write("&nbsp;") 
@@ -298,4 +299,3 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                 
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
-
