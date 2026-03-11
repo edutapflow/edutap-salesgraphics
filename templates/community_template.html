@@ -29,9 +29,11 @@
         .coupon-code { left: 282px; top: 986px; width: 132px; height: 43px; font-size: 22px !important; color: #FFFFFF !important; background-color: #E31E24 !important; border-radius: 6px; }
         .validity { left: 421px; top: 986px; width: 630px; height: 43px; font-size: 24px !important; color: #000000 !important; background-color: #FFFFFF !important; justify-content: flex-start; padding-left: 10px; }
 
-        .course-container { position: absolute; left: 17px; top: 635px; width: 1045px; height: 310px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 20px; }
+        /* ========================================================= */
+        /* CHANGE HEIGHT HERE: Reduce 310px to a smaller number (e.g., 250px) to shrink boxes */
+        /* ========================================================= */
+        .course-container { position: absolute; left: 17px; top: 635px; width: 1045px; height: 305px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 20px; }
         
-        /* DYNAMIC WIDTH LOGIC: Gives more room for text if there are fewer boxes */
         .course-box { 
             display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; 
             box-shadow: 0px 4px 10px rgba(0,0,0,0.3); background-color: #003B5C;
@@ -42,15 +44,16 @@
             {% endif %}
         }
 
-        /* Standard Layout CSS */
         .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 4px 10px; text-align: center; font-weight: 800; line-height: 1.1; }
         .yellow-strip { background-color: #FFDE00; color: #000000; flex: 1.8; text-transform: uppercase; }
         .black-strip { background-color: #000000; color: #FFFFFF; flex: 1; }
         .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
-        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 4px 10px; display: flex; align-items: center; justify-content: center; }
+        
+        /* Reduced padding here to give text more physical room to grow */
+        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 2px 5px; display: flex; align-items: center; justify-content: center; }
         .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;}
 
-        /* ADVANCED SPLIT-BOX CSS (Fixes cramped text) */
+        /* ADVANCED SPLIT-BOX CSS */
         .split-row { flex-direction: row; padding: 0 !important; }
         .split-half { width: calc(50% - 15px); padding: 4px 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
         .split-divider { width: 30px; display: flex; align-items: center; justify-content: center; position: relative; height: 100%; }
@@ -136,15 +139,14 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Normal boxes are allowed to be larger
-            textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 45, minFontSize: 14});
-            textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 28, minFontSize: 12});
-            textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 24, minFontSize: 12});
+            // DRASTICALLY RAISED MAX FONT SIZES
+            textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 55, minFontSize: 14});
+            textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 35, minFontSize: 12});
+            textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 40, minFontSize: 12});
 
-            // Split boxes have a slightly lower max limit to look natural, but won't ruin standard boxes
-            textFit(document.getElementsByClassName('split-title'), {multiLine: true, maxFontSize: 30, minFontSize: 10});
-            textFit(document.getElementsByClassName('split-sub'), {multiLine: true, maxFontSize: 22, minFontSize: 10});
-            textFit(document.getElementsByClassName('split-offer'), {multiLine: true, maxFontSize: 20, minFontSize: 10});
+            textFit(document.getElementsByClassName('split-title'), {multiLine: true, maxFontSize: 35, minFontSize: 10});
+            textFit(document.getElementsByClassName('split-sub'), {multiLine: true, maxFontSize: 28, minFontSize: 10});
+            textFit(document.getElementsByClassName('split-offer'), {multiLine: true, maxFontSize: 30, minFontSize: 10});
 
             function equalizeSizes(targetClass) {
                 var nodes = document.querySelectorAll('.' + targetClass + ' .textFitted');
@@ -159,7 +161,6 @@
                 });
             }
             
-            // Equalize them in their own separate groups so they don't break each other!
             equalizeSizes('normal-title');
             equalizeSizes('normal-sub');
             equalizeSizes('normal-offer');
