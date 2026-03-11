@@ -20,7 +20,6 @@ from playwright.sync_api import sync_playwright
 st.set_page_config(page_title="EduTap Asset Generator", layout="wide", initial_sidebar_state="collapsed")
 
 # --- Cloud Server Chrome Installer ---
-# This ensures Streamlit Cloud installs the headless browser on boot
 @st.cache_resource
 def install_playwright():
     os.system("playwright install chromium")
@@ -67,21 +66,19 @@ def save_config(config):
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f)
 
-# Load session state variables
 if 'config' not in st.session_state:
     st.session_state.config = load_config()
 
 if 'boxes' not in st.session_state:
     st.session_state.boxes = [str(uuid.uuid4())]
 
-# --- NEW: GLOBAL PASSWORD PROTECTION ---
+# --- GLOBAL PASSWORD PROTECTION ---
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
     st.title("🔒 Access Restricted")
     st.markdown("Please enter the passcode to access the EduTap Asset Generator.")
-    
     app_password = st.text_input("Passcode", type="password")
     
     if st.button("Unlock App"):
@@ -90,10 +87,7 @@ if not st.session_state.authenticated:
             st.rerun()
         else:
             st.error("Incorrect Passcode. Access Denied.")
-            
-    # This stops the entire rest of the app from loading until unlocked
     st.stop() 
-
 
 def add_box():
     if len(st.session_state.boxes) < 6:
@@ -106,44 +100,30 @@ if 'success_popup' in st.session_state:
     st.toast(st.session_state.success_popup, icon="✅")
     del st.session_state.success_popup
 
-# --- SIDEBAR: Password Protected Data Management ---
+# --- SIDEBAR ---
 with st.sidebar:
     st.header("⚙️ Data Management")
-    st.markdown("Unlock to add new drop-down items to the tool.")
-    
     admin_pass = st.text_input("Admin Password", type="password")
-    
     if admin_pass == "Addme@123":
         st.success("Admin Panel Unlocked")
-        
         category_to_edit = st.selectbox("Select List to Update", ["Sale Campaigns", "Exams", "Streams", "Subjects", "Offerings"])
         new_item = st.text_input(f"New item for {category_to_edit}")
-        
         if st.button("➕ Add Item", use_container_width=True):
             if new_item.strip():
-                cat_map = {
-                    "Sale Campaigns": "CAMPAIGNS",
-                    "Exams": "EXAMS",
-                    "Streams": "STREAMS",
-                    "Subjects": "SUBJECTS",
-                    "Offerings": "OFFERINGS"
-                }
+                cat_map = {"Sale Campaigns": "CAMPAIGNS", "Exams": "EXAMS", "Streams": "STREAMS", "Subjects": "SUBJECTS", "Offerings": "OFFERINGS"}
                 key = cat_map[category_to_edit]
-                
                 if new_item.strip() not in st.session_state.config[key]:
                     st.session_state.config[key].append(new_item.strip())
                     save_config(st.session_state.config)
-                    st.session_state.success_popup = f"'{new_item.strip()}' successfully added to the {category_to_edit} list!"
+                    st.session_state.success_popup = f"'{new_item.strip()}' added!"
                     st.rerun() 
                 else:
-                    st.warning(f"'{new_item.strip()}' already exists in this list.")
-            else:
-                st.warning("Please enter a valid text string.")
+                    st.warning("Item already exists.")
     elif admin_pass != "":
         st.error("Incorrect Password.")
 
 # --- MAIN DASHBOARD ---
-st.title("EduTap Sale Grapics Generator")
+st.title("EduTap Sale Graphics Generator")
 
 # --- SECTION 1: Campaign Details ---
 st.header("Campaign Configuration")
@@ -152,7 +132,6 @@ with st.container():
     with col1:
         sale_name = st.selectbox("Sale Campaign", st.session_state.config["CAMPAIGNS"])
         discount_type = st.radio("Discount Structure", ["Flat", "Flat + Additional"])
-        
     with col2:
         if discount_type == "Flat":
             flat_val = st.text_input("Flat Discount (%)", "50")
@@ -160,18 +139,14 @@ with st.container():
         else:
             flat_val = st.text_input("Flat Discount (%)", "50")
             add_val = st.text_input("Additional Discount (%)", "40")
-            
         coupon_code = st.text_input("Coupon Code (Max 7 Chars)", "SUPER", max_chars=7)
-        
     with col3:
         default_start = datetime.date.today()
         default_end = default_start + datetime.timedelta(days=1)
         validity_dates = st.date_input("Validity Period", value=(default_start, default_end))
-        
         validity_text = ""
         if len(validity_dates) == 2:
             start_d, end_d = validity_dates
-            # Changed %B (Full Month) to %b (Short Month)
             if start_d.month == end_d.month and start_d.year == end_d.year:
                 validity_text = f"*Valid: {start_d.day} to {end_d.day} {start_d.strftime('%b %Y')}*"
             else:
@@ -184,29 +159,77 @@ st.header("Course Alignments")
 
 courses = []
 for i, box_id in enumerate(st.session_state.boxes):
-    col1, col2, col3, col4, col5 = st.columns([3, 2, 2, 4, 0.5])
+    st.markdown(f"**Course Box {i+1}**")
     
-    with col1:
-        exam = st.selectbox("Exam Name", options=st.session_state.config["EXAMS"], key=f"exam_{box_id}")
-    with col2:
-        stream = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"stream_{box_id}")
-    with col3:
+    # 1. NEW UI FLOW: The Mode Selector
+    mode = st.radio(
+        "Exam Mode", 
+        ["Single Exam", "Sector", "Combo (Individual)", "Combo (Individual + Sector)"], 
+        key=f"mode_{box_id}", 
+        horizontal=True
+    )
+    
+    col_a, col_b, col_c = st.columns([3, 2, 3])
+    
+    main_exam = ""
+    sector_name = ""
+    stream = ""
+    subject = ""
+    offerings = []
+    
+    with col_a:
+        if mode == "Single Exam":
+            main_exam = st.selectbox("Select Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
+        elif mode == "Sector":
+            sector_name = st.selectbox("Select Sector", options=["Bank Exams"], key=f"sec_{box_id}")
+        elif mode == "Combo (Individual)":
+            main_exam = st.selectbox("Select Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
+        elif mode == "Combo (Individual + Sector)":
+            sub_col1, sub_col2 = st.columns(2)
+            with sub_col1:
+                main_exam = st.selectbox("Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
+            with sub_col2:
+                sector_name = st.selectbox("Sector", options=["Bank Exams"], key=f"sec_{box_id}")
+                
+    with col_b:
+        stream = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str_{box_id}")
         subject = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub_{box_id}")
-    with col4:
-        default_offs = [opt for opt in ["Gold", "Silver", "Test Series"] if opt in st.session_state.config["OFFERINGS"]]
+        
+    with col_c:
         offerings = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off_{box_id}")
-    with col5:
-        st.write("&nbsp;") 
         st.write("&nbsp;") 
         if len(st.session_state.boxes) > 1:
-            st.button("❌", key=f"del_{box_id}", on_click=remove_box, args=(box_id,), help="Remove this course box")
+            st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            
+    # Process the Title logic for Jinja
+    main_title = ""
+    sub_title = ""
+    
+    if mode == "Single Exam":
+        main_title = main_exam
+    elif mode == "Sector":
+        main_title = sector_name
+        if sector_name == "Bank Exams":
+            sub_title = "SBI + IBPS + RRB<br>(PO + CLERK)"
+    elif mode == "Combo (Individual)":
+        main_title = main_exam
+        sub_title = "All Combos"
+    elif mode == "Combo (Individual + Sector)":
+        if main_exam and sector_name:
+            main_title = f"{main_exam} <span style='color:#E31E24;'>+</span> {sector_name}"
+        else:
+            main_title = f"{main_exam}{sector_name}"
+        if sector_name == "Bank Exams":
+            sub_title = "SBI + IBPS + RRB<br>(PO + CLERK)"
             
     courses.append({
-        "exam": exam.strip(), 
+        "main_title": main_title.strip(), 
+        "sub_title": sub_title.strip(),
         "stream": stream.strip(),
         "subject": subject.strip(), 
         "offerings": offerings
     })
+    st.write("---")
 
 if len(st.session_state.boxes) < 6:
     st.button("➕ Add Another Course Box", on_click=add_box)
@@ -215,9 +238,8 @@ st.divider()
 
 # --- SECTION 3: Engine Execution ---
 if st.button("Initialize Asset Generation", type="primary", use_container_width=True):
-    
     if len(validity_dates) < 2:
-        st.error("Action Required: Please select both a Start Date and End Date for the validity period before generating.")
+        st.error("Action Required: Please select both a Start Date and End Date.")
     else:
         with st.spinner("Making Graphics. Please wait..."):
             data_payload = {
@@ -247,11 +269,9 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                 
                 with sync_playwright() as p:
                     browser = p.chromium.launch(headless=True)
-                    
                     for task in tasks:
                         data_payload["use_expiry"] = task["use_expiry"]
                         rendered_html = task["template"].render(data=data_payload)
-                        
                         safe_name = task['name'].replace(' ', '_')
                         temp_overlay_name = f"temp_{safe_name}"
                         overlay_path = os.path.join(OUTPUT_DIR, temp_overlay_name).replace("\\", "/")
@@ -260,34 +280,25 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                         page = browser.new_page(viewport={"width": task["size"][0], "height": task["size"][1]})
                         page.set_content(rendered_html, wait_until="networkidle")
                         page.wait_for_timeout(500) 
-                        
                         page.screenshot(path=overlay_path, omit_background=True)
                         page.close()
                         
                         base_img = Image.open(task['bg']).convert("RGBA")
                         base_img = base_img.resize(task["size"], Image.LANCZOS) 
-                        
                         overlay_img = Image.open(overlay_path).convert("RGBA")
-                        
                         final_img = Image.alpha_composite(base_img, overlay_img)
                         final_img.save(final_output_path, format="PNG")
-                        
                         os.remove(overlay_path)
-                        
                     browser.close()
                 
-                # --- CLOUD DELIVERY & STORAGE CLEANUP PROTOCOL ---
                 zip_buffer = io.BytesIO()
                 with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                     for task in tasks:
                         final_output_path = os.path.join(OUTPUT_DIR, task["name"]).replace("\\", "/")
                         zip_file.write(final_output_path, arcname=task["name"])
-                        # Delete the raw image from the server to save space
                         os.remove(final_output_path) 
                 
                 st.success("✅ Done. Note: Download Your Files First Before Refershing or Generating Next Graphics")
-                
-                # Inject the download button
                 safe_camp_name = sale_name.replace(" ", "_")
                 st.download_button(
                     label="📦 Download All Assets (ZIP)",
@@ -296,6 +307,5 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                     mime="application/zip",
                     use_container_width=True
                 )
-                
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
