@@ -29,23 +29,32 @@
         .coupon-code { left: 854px; top: 527px; width: 127px; height: 31px; font-size: 16px !important; color: #FFFFFF !important; background-color: #E31E24 !important; border-radius: 4px; }
         .validity { left: 999px; top: 527px; width: 289px; height: 31px; font-size: 16px !important; color: #FFFFFF !important; justify-content: flex-start; padding-left: 5px; }
 
-        .course-container { position: absolute; left: 674px; top: 328px; width: 746px; height: 110px; display: flex; flex-wrap: nowrap; justify-content: center; align-content: center; gap: 8px; }
-        .course-box { display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; flex-basis: calc(100% / {{ data.courses|length }}); max-width: 240px; height: 100%; box-shadow: 0px 4px 10px rgba(0,0,0,0.4); background-color: #003B5C; }
+        .course-container { position: absolute; left: 674px; top: 328px; width: 746px; height: 110px; display: flex; flex-wrap: nowrap; justify-content: center; align-content: center; gap: 12px; }
+        
+        /* DYNAMIC WIDTH LOGIC: Solves YT sticking issue */
+        .course-box { 
+            display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; 
+            height: 100%; box-shadow: 0px 4px 10px rgba(0,0,0,0.4); background-color: #003B5C; 
+            {% if data.courses|length == 1 %} width: 450px;
+            {% elif data.courses|length == 2 %} width: 360px;
+            {% else %} flex-basis: calc(100% / {{ data.courses|length }}); max-width: 240px;
+            {% endif %}
+        }
 
-        .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 2px 1px; text-align: center; font-weight: 800; line-height: 1.1; }
+        .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 2px 4px; text-align: center; font-weight: 800; line-height: 1.1; }
         .yellow-strip { background-color: #FFDE00; color: #000000; flex: 1.8; text-transform: uppercase; }
         .black-strip { background-color: #000000; color: #FFFFFF; flex: 1; }
         .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
-        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 1px 3px; display: flex; align-items: center; justify-content: center; }
+        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 2px 4px; display: flex; align-items: center; justify-content: center; }
         .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center;}
 
-        /* CSS specifically for the Split-Box Layout */
+        /* YT ADVANCED SPLIT-BOX CSS */
         .split-row { flex-direction: row; padding: 0 !important; }
-        .split-half { flex: 1; display: flex; align-items: center; justify-content: center; width: 50%; padding: 2px; flex-direction: column; }
-        .split-divider { width: 0px; display: flex; align-items: center; justify-content: center; z-index: 10; overflow: visible; position: relative; }
-        .plus-icon { color: #000000; font-weight: 900; font-size: 20px; position: absolute; }
-        .line-divider { border-left: 1px solid #FFFFFF; height: 70%; position: absolute; }
-        .line-divider-black { border-left: 1px solid #000000; height: 70%; position: absolute; }
+        .split-half { width: calc(50% - 10px); padding: 2px 6px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
+        .split-divider { width: 20px; display: flex; align-items: center; justify-content: center; position: relative; height: 100%; }
+        .plus-icon { color: #000000; font-weight: 900; font-size: 18px; line-height: 1; }
+        .line-divider { border-left: 1px solid #FFFFFF; height: 60%; }
+        .line-divider-black { border-left: 1px solid #000000; height: 60%; }
     </style>
 </head>
 <body>
@@ -65,61 +74,59 @@
                 <div class="course-box">
                     {% if course.is_split %}
                         <div class="strip-container yellow-strip split-row">
-                            <div class="split-half">
-                                <div class="fit-text title">{{ course.exam1_title | safe | upper | replace('GRADE A/B', 'GRADE&nbsp;A/B') | replace('GRADE A', 'GRADE&nbsp;A') | replace('GRADE B', 'GRADE&nbsp;B') }}</div>
-                            </div>
+                            <div class="split-half"><div class="fit-text split-title">
+                                {{ course.exam1_title | safe | upper | replace('GRADE A/B', 'GRADE&nbsp;A/B') | replace('GRADE A', 'GRADE&nbsp;A') | replace('GRADE B', 'GRADE&nbsp;B') }}
+                            </div></div>
                             <div class="split-divider"><span class="plus-icon">+</span></div>
-                            <div class="split-half">
-                                <div class="fit-text title">
-                                    {{ course.exam2_title | safe | upper }}
-                                    {% if course.exam2_sub %}<br><span style="font-size: 0.55em; line-height: 1.1; display: block; margin-top: 2px; font-weight: 700;">{{ course.exam2_sub | safe | upper }}</span>{% endif %}
-                                </div>
-                            </div>
+                            <div class="split-half"><div class="fit-text split-title">
+                                {{ course.exam2_title | safe | upper }}
+                                {% if course.exam2_sub %}<br><span style="font-size: 0.65em; line-height: 1.1; display: block; margin-top: 2px; font-weight: 700;">{{ course.exam2_sub | safe | upper }}</span>{% endif %}
+                            </div></div>
                         </div>
                         
                         {% if course.stream1 or course.stream2 %}
                         <div class="strip-container black-strip split-row">
-                            <div class="split-half"><div class="fit-text sub">{{ course.stream1 }}</div></div>
+                            <div class="split-half"><div class="fit-text split-sub">{{ course.stream1 }}</div></div>
                             <div class="split-divider"><div class="line-divider"></div></div>
-                            <div class="split-half"><div class="fit-text sub">{{ course.stream2 }}</div></div>
+                            <div class="split-half"><div class="fit-text split-sub">{{ course.stream2 }}</div></div>
                         </div>
                         {% endif %}
                         
                         {% if course.subj1 or course.subj2 %}
                         <div class="strip-container white-strip split-row">
-                            <div class="split-half"><div class="fit-text sub">{{ course.subj1 }}</div></div>
+                            <div class="split-half"><div class="fit-text split-sub">{{ course.subj1 }}</div></div>
                             <div class="split-divider"><div class="line-divider-black"></div></div>
-                            <div class="split-half"><div class="fit-text sub">{{ course.subj2 }}</div></div>
+                            <div class="split-half"><div class="fit-text split-sub">{{ course.subj2 }}</div></div>
                         </div>
                         {% endif %}
                         
                         <div class="blue-offer-box split-row">
-                            <div class="split-half"><div class="fit-text offer">{{ course.offer1|join(', ') }}</div></div>
+                            <div class="split-half"><div class="fit-text split-offer">{{ course.offer1|join(', ') }}</div></div>
                             <div class="split-divider"><div class="line-divider"></div></div>
-                            <div class="split-half"><div class="fit-text offer">{{ course.offer2|join(', ') }}</div></div>
+                            <div class="split-half"><div class="fit-text split-offer">{{ course.offer2|join(', ') }}</div></div>
                         </div>
 
                     {% else %}
                         {% if course.main_title %}
                         <div class="strip-container yellow-strip">
-                            <div class="fit-text title">
+                            <div class="fit-text normal-title">
                                 {{ course.main_title | safe | upper | replace('GRADE A/B', 'GRADE&nbsp;A/B') | replace('GRADE A', 'GRADE&nbsp;A') | replace('GRADE B', 'GRADE&nbsp;B') }}
                                 {% if course.sub_title %}
-                                    <br><span style="font-size: 0.55em; line-height: 1.1; display: block; margin-top: 4px; font-weight: 700;">{{ course.sub_title | safe | upper }}</span>
+                                    <br><span style="font-size: 0.65em; line-height: 1.1; display: block; margin-top: 4px; font-weight: 700;">{{ course.sub_title | safe | upper }}</span>
                                 {% endif %}
                             </div>
                         </div>
                         {% endif %}
                         
                         {% if course.stream %}
-                        <div class="strip-container black-strip"><div class="fit-text sub">{{ course.stream }}</div></div>
+                        <div class="strip-container black-strip"><div class="fit-text normal-sub">{{ course.stream }}</div></div>
                         {% endif %}
                         
                         {% if course.subject %}
-                        <div class="strip-container white-strip"><div class="fit-text sub">{{ course.subject }}</div></div>
+                        <div class="strip-container white-strip"><div class="fit-text normal-sub">{{ course.subject }}</div></div>
                         {% endif %}
                         
-                        <div class="blue-offer-box"><div class="fit-text offer">{{ course.offerings|join(', ') }}</div></div>
+                        <div class="blue-offer-box"><div class="fit-text normal-offer">{{ course.offerings|join(', ') }}</div></div>
                     {% endif %}
                 </div>
             {% endfor %}
@@ -127,9 +134,13 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            textFit(document.getElementsByClassName('title'), {multiLine: true, maxFontSize: 24, minFontSize: 8});
-            textFit(document.getElementsByClassName('sub'), {multiLine: true, maxFontSize: 18, minFontSize: 8});
-            textFit(document.getElementsByClassName('offer'), {multiLine: true, maxFontSize: 15, minFontSize: 8});
+            textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 26, minFontSize: 10});
+            textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 18, minFontSize: 8});
+            textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 16, minFontSize: 8});
+
+            textFit(document.getElementsByClassName('split-title'), {multiLine: true, maxFontSize: 20, minFontSize: 8});
+            textFit(document.getElementsByClassName('split-sub'), {multiLine: true, maxFontSize: 14, minFontSize: 8});
+            textFit(document.getElementsByClassName('split-offer'), {multiLine: true, maxFontSize: 14, minFontSize: 8});
 
             function equalizeSizes(targetClass) {
                 var nodes = document.querySelectorAll('.' + targetClass + ' .textFitted');
@@ -143,9 +154,14 @@
                     node.style.fontSize = minPx + 'px';
                 });
             }
-            equalizeSizes('title');
-            equalizeSizes('sub');
-            equalizeSizes('offer');
+            
+            equalizeSizes('normal-title');
+            equalizeSizes('normal-sub');
+            equalizeSizes('normal-offer');
+
+            equalizeSizes('split-title');
+            equalizeSizes('split-sub');
+            equalizeSizes('split-offer');
         });
     </script>
 </body>
