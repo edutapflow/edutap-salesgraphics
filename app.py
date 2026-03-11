@@ -161,7 +161,6 @@ courses = []
 for i, box_id in enumerate(st.session_state.boxes):
     st.markdown(f"**Course Box {i+1}**")
     
-    # 1. NEW UI FLOW: The Mode Selector
     mode = st.radio(
         "Exam Mode", 
         ["Single Exam", "Sector", "Combo (Individual)", "Combo (Individual + Sector)"], 
@@ -169,66 +168,82 @@ for i, box_id in enumerate(st.session_state.boxes):
         horizontal=True
     )
     
-    col_a, col_b, col_c = st.columns([3, 2, 3])
-    
-    main_exam = ""
-    sector_name = ""
-    stream = ""
-    subject = ""
-    offerings = []
-    
-    with col_a:
-        if mode == "Single Exam":
-            main_exam = st.selectbox("Select Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
-        elif mode == "Sector":
-            sector_name = st.selectbox("Select Sector", options=["Bank Exams"], key=f"sec_{box_id}")
-        elif mode == "Combo (Individual)":
-            main_exam = st.selectbox("Select Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
-        elif mode == "Combo (Individual + Sector)":
-            sub_col1, sub_col2 = st.columns(2)
-            with sub_col1:
-                main_exam = st.selectbox("Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
-            with sub_col2:
-                sector_name = st.selectbox("Sector", options=["Bank Exams"], key=f"sec_{box_id}")
-                
-    with col_b:
-        stream = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str_{box_id}")
-        subject = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub_{box_id}")
+    if mode != "Combo (Individual + Sector)":
+        # LINEAR 4-COLUMN LAYOUT (Fixes the float issue)
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            if mode == "Single Exam" or mode == "Combo (Individual)":
+                main_exam = st.selectbox("Select Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
+            else:
+                main_exam = st.selectbox("Select Sector", options=["Bank Exams"], key=f"sec_{box_id}")
+        with col2:
+            stream = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str_{box_id}")
+        with col3:
+            subject = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub_{box_id}")
+        with col4:
+            offerings = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off_{box_id}")
+            st.write("&nbsp;") 
+            if len(st.session_state.boxes) > 1:
+                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
         
-    with col_c:
-        offerings = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off_{box_id}")
-        st.write("&nbsp;") 
-        if len(st.session_state.boxes) > 1:
-            st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
-            
-    # Process the Title logic for Jinja
-    main_title = ""
-    sub_title = ""
-    
-    if mode == "Single Exam":
         main_title = main_exam
-    elif mode == "Sector":
-        main_title = sector_name
-        if sector_name == "Bank Exams":
+        sub_title = ""
+        if mode == "Sector" and main_exam == "Bank Exams":
             sub_title = "SBI + IBPS + RRB<br>(PO + CLERK)"
-    elif mode == "Combo (Individual)":
-        main_title = main_exam
-        sub_title = "All Combos"
-    elif mode == "Combo (Individual + Sector)":
-        if main_exam and sector_name:
-            main_title = f"{main_exam} <span style='color:#E31E24;'>+</span> {sector_name}"
-        else:
-            main_title = f"{main_exam}{sector_name}"
-        if sector_name == "Bank Exams":
-            sub_title = "SBI + IBPS + RRB<br>(PO + CLERK)"
+        elif mode == "Combo (Individual)":
+            sub_title = "All Combos"
             
-    courses.append({
-        "main_title": main_title.strip(), 
-        "sub_title": sub_title.strip(),
-        "stream": stream.strip(),
-        "subject": subject.strip(), 
-        "offerings": offerings
-    })
+        courses.append({
+            "is_split": False,
+            "main_title": main_title.strip(), 
+            "sub_title": sub_title.strip(),
+            "stream": stream.strip(),
+            "subject": subject.strip(), 
+            "offerings": offerings
+        })
+        
+    else:
+        # COMBO SPLIT LAYOUT
+        st.markdown("↳ *Left Side (Individual Exam)*")
+        c1, c2, c3, c4 = st.columns(4)
+        with c1:
+            ex1 = st.selectbox("Exam", options=st.session_state.config["EXAMS"], key=f"ex1_{box_id}")
+        with c2:
+            str1 = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str1_{box_id}")
+        with c3:
+            sub1 = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub1_{box_id}")
+        with c4:
+            off1 = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off1_{box_id}")
+
+        st.markdown("↳ *Right Side (Sector)*")
+        c5, c6, c7, c8 = st.columns(4)
+        with c5:
+            ex2 = st.selectbox("Sector", options=["Bank Exams"], key=f"ex2_{box_id}")
+        with c6:
+            str2 = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str2_{box_id}")
+        with c7:
+            sub2 = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub2_{box_id}")
+        with c8:
+            off2 = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off2_{box_id}")
+            st.write("&nbsp;") 
+            if len(st.session_state.boxes) > 1:
+                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+        
+        ex2_sub = "SBI + IBPS + RRB<br>(PO + CLERK)" if ex2 == "Bank Exams" else ""
+        
+        courses.append({
+            "is_split": True,
+            "exam1_title": ex1.strip(),
+            "exam1_sub": "",
+            "stream1": str1.strip(),
+            "subj1": sub1.strip(),
+            "offer1": off1,
+            "exam2_title": ex2.strip(),
+            "exam2_sub": ex2_sub,
+            "stream2": str2.strip(),
+            "subj2": sub2.strip(),
+            "offer2": off2
+        })
     st.write("---")
 
 if len(st.session_state.boxes) < 6:
