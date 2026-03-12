@@ -16,6 +16,12 @@ from jinja2 import Environment, FileSystemLoader
 from PIL import Image
 from playwright.sync_api import sync_playwright
 
+# --- Helper Function for Dates ---
+def get_ordinal(n):
+    if 11 <= (n % 100) <= 13:
+        return str(n) + 'th'
+    return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+
 # --- UI Configuration (MUST BE THE VERY FIRST STREAMLIT COMMAND) ---
 st.set_page_config(page_title="EduTap Asset Generator", layout="wide", initial_sidebar_state="collapsed")
 
@@ -45,9 +51,9 @@ def load_config():
         "STREAMS": ["", "General Stream"],
         "SUBJECTS": ["", "Quant", "Reasoning", "English", "AFM", "PPB", "IF&IFS", "RBWM", "ABM", "BFM", "ABFM", "BRBL", "Maths"],
         "OFFERINGS": [
-            "Gold", "Silver", "Test Series", "Crash Course", "Master Course", 
+            "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", 
             "Live Crash Course", "Special Subjects", "Super Crash Course", 
-            "Banker's Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"
+            "Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"
         ]
     }
     if os.path.exists(CONFIG_FILE):
@@ -169,7 +175,6 @@ for i, box_id in enumerate(st.session_state.boxes):
     )
     
     if mode != "Combo (Individual + Sector)":
-        # LINEAR 4-COLUMN LAYOUT (Fixes the float issue)
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             if mode == "Single Exam" or mode == "Combo (Individual)":
@@ -203,7 +208,6 @@ for i, box_id in enumerate(st.session_state.boxes):
         })
         
     else:
-        # COMBO SPLIT LAYOUT
         st.markdown("↳ *Left Side (Individual Exam)*")
         c1, c2, c3, c4 = st.columns(4)
         with c1:
@@ -251,12 +255,12 @@ if len(st.session_state.boxes) < 6:
 
 st.divider()
 
-# --- SECTION 3: Engine Execution ---
+# --- SECTION 3: Engine Execution & Text Generation ---
 if st.button("Initialize Asset Generation", type="primary", use_container_width=True):
     if len(validity_dates) < 2:
         st.error("Action Required: Please select both a Start Date and End Date.")
     else:
-        with st.spinner("Making Graphics. Please wait..."):
+        with st.spinner("Making Graphics and Generating Promo Text. Please wait..."):
             data_payload = {
                 "discount_type": discount_type, "flat_val": flat_val, "add_val": add_val,
                 "coupon_code": coupon_code, "validity_text": validity_text,
@@ -322,5 +326,61 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                     mime="application/zip",
                     use_container_width=True
                 )
+                
+                # --- GENERATE TELEGRAM PROMO TEXT ---
+                st.divider()
+                st.subheader("📝 Telegram Promo Text")
+                st.markdown("Hover over the block below and click the **Copy** icon in the top right corner.")
+                
+                # 1. Format Discount String
+                if discount_type == "Flat":
+                    dist_str = f"flat {flat_val}%"
+                else:
+                    dist_str = f"flat {flat_val}% + additional {add_val}%"
+                    
+                # 2. Format Date String
+                end_date = validity_dates[1]
+                ordinal_day = get_ordinal(end_date.day)
+                formatted_month_year = end_date.strftime("%B, %Y")
+                final_date_str = f"{ordinal_day} {formatted_month_year}"
+                
+                # 3. Format Course List
+                course_lines = []
+                for c in courses:
+                    if c.get("is_split"):
+                        title = f"{c['exam1_title']} + {c['exam2_title']}"
+                        # Combine and deduplicate offerings
+                        combined_offs = []
+                        for o in c['offer1'] + c['offer2']:
+                            if o not in combined_offs:
+                                combined_offs.append(o)
+                        offer_str = " | ".join(combined_offs)
+                    else:
+                        title = c['main_title']
+                        offer_str = " | ".join(c['offerings'])
+                        
+                    if offer_str:
+                        course_lines.append(f"✅ {title}: {offer_str}")
+                    else:
+                        course_lines.append(f"✅ {title}")
+                        
+                course_list_str = "\n".join(course_lines)
+                
+                # 4. Construct Final Text
+                promo_text = f"""**😀😀 {sale_name} is here!!**
+
+🥳🥳 Avail a **{dist_str} off** on:
+
+{course_list_str}
+
+Use Code: **{coupon_code}**
+
+The offer is valid till {final_date_str}!!
+
+🎯 Subscribe here: https://edutap.in/courses/"""
+
+                # Render copyable code block
+                st.code(promo_text, language="text")
+                
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
