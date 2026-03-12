@@ -31,27 +31,28 @@
 
         .course-container { position: absolute; left: 674px; top: 328px; width: 746px; height: 110px; display: flex; flex-wrap: nowrap; justify-content: center; align-content: center; gap: 12px; }
         
+        /* STRICT FLEX OVERFLOW LOCKS */
         .course-box { 
             display: flex; flex-direction: column; border-radius: 8px; overflow: hidden; 
-            height: 100%; box-shadow: 0px 4px 10px rgba(0,0,0,0.4); background-color: #003B5C; 
+            height: 100%; box-shadow: 0px 4px 10px rgba(0,0,0,0.4); background-color: #003B5C; min-height: 0;
             {% if data.courses|length == 1 %} width: 450px;
             {% elif data.courses|length == 2 %} width: 360px;
             {% else %} flex-basis: calc(100% / {{ data.courses|length }}); max-width: 240px;
             {% endif %}
         }
 
-        .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 2px 4px; text-align: center; font-weight: 800; line-height: 1.1; }
+        .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 2px 4px; text-align: center; font-weight: 800; line-height: 1.1; min-height: 0; overflow: hidden; }
         .yellow-strip { background-color: #FFDE00; color: #000000; flex: 1.8; text-transform: uppercase; }
         .black-strip { background-color: #000000; color: #FFFFFF; flex: 1; }
         .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
-        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 2px 4px; display: flex; align-items: center; justify-content: center; }
+        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 2px 4px; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
         
-        /* CSS FLEXBOX FIX */
-        .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; }
+        /* PURE CSS FLEXBOX CENTERING */
+        .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
         .textFitted { display: inline-block !important; line-height: 1.15 !important; text-align: center; width: 100%; text-wrap: balance; }
 
         .split-row { flex-direction: row; padding: 0 !important; }
-        .split-half { flex: 1; padding: 2px 6px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; }
+        .split-half { flex: 1; padding: 2px 6px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
         .split-divider { flex: 0 0 20px; display: flex; align-items: center; justify-content: center; position: relative; height: 100%; }
         .plus-icon { color: #000000; font-weight: 900; font-size: 18px; line-height: 1; }
         .line-divider { border-left: 1px solid #FFFFFF; height: 60%; }
@@ -135,16 +136,15 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // STRICT CAPS for YouTube
-            textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 20, minFontSize: 10});
-            textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 14, minFontSize: 8});
-            textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 16, minFontSize: 8});
+            // INCREASED MAX SIZES
+            textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 26, minFontSize: 8});
+            textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 18, minFontSize: 8});
+            textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 22, minFontSize: 8});
 
-            textFit(document.getElementsByClassName('split-title'), {multiLine: true, maxFontSize: 16, minFontSize: 8});
-            textFit(document.getElementsByClassName('split-sub'), {multiLine: true, maxFontSize: 12, minFontSize: 8});
-            textFit(document.getElementsByClassName('split-offer'), {multiLine: true, maxFontSize: 14, minFontSize: 8});
+            textFit(document.getElementsByClassName('split-title'), {multiLine: true, maxFontSize: 18, minFontSize: 8});
+            textFit(document.getElementsByClassName('split-sub'), {multiLine: true, maxFontSize: 14, minFontSize: 8});
+            textFit(document.getElementsByClassName('split-offer'), {multiLine: true, maxFontSize: 18, minFontSize: 8});
 
-            // FIXED EQUALIZER
             function equalizeSizes(targetClass) {
                 var nodes = document.querySelectorAll('.' + targetClass + ' .textFitted');
                 if (nodes.length <= 1) return; 
