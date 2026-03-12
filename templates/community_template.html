@@ -31,7 +31,6 @@
 
         .course-container { position: absolute; left: 17px; top: 635px; width: 1045px; height: 310px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 20px; }
         
-        /* STRICT FLEX OVERFLOW LOCKS (min-height: 0 ensures flex items cannot break out) */
         .course-box { 
             display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; 
             box-shadow: 0px 4px 10px rgba(0,0,0,0.3); background-color: #003B5C; min-height: 0;
@@ -46,14 +45,18 @@
         .yellow-strip { background-color: #FFDE00; color: #000000; flex: 1.8; text-transform: uppercase; }
         .black-strip { background-color: #000000; color: #FFFFFF; flex: 1; }
         .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
-        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 4px 8px; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
         
-        /* PURE CSS FLEXBOX CENTERING (Replaces buggy JS alignment) */
+        /* INCREASED PADDING HERE: Forces a 24px wall on the left and right */
+        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 8px 24px; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
+        
         .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
         .textFitted { display: inline-block !important; line-height: 1.15 !important; text-align: center; width: 100%; text-wrap: balance; }
 
         .split-row { flex-direction: row; padding: 0 !important; }
-        .split-half { flex: 1; padding: 4px 8px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+        
+        /* INCREASED PADDING HERE: Protects the split boxes from edge sticking */
+        .split-half { flex: 1; padding: 6px 14px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+        
         .split-divider { flex: 0 0 30px; display: flex; align-items: center; justify-content: center; position: relative; height: 100%; }
         .plus-icon { color: #000000; font-weight: 900; font-size: 28px; line-height: 1; }
         .line-divider { border-left: 2px solid #FFFFFF; height: 60%; }
@@ -137,7 +140,6 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // SIGNIFICANTLY RAISED LIMITS (Allows short text to fill the box natively)
             textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 40, minFontSize: 12});
             textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 28, minFontSize: 12});
             textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 36, minFontSize: 12});
