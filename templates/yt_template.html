@@ -12,7 +12,6 @@
             margin: 0 !important; padding: 0 !important; overflow: hidden !important; 
             font-family: 'Montserrat', sans-serif; background: transparent !important;
             position: absolute !important; top: 0 !important; left: 0 !important;
-            line-height: 1.1;
         }
         .canvas {
             position: absolute !important; top: 0 !important; left: 0 !important; 
@@ -47,19 +46,18 @@
         .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
         .blue-offer-box { position: relative; background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; display: block; font-weight: 800; }
 
-        .normal-padding { position: absolute; top: 4px; bottom: 4px; left: 10px; right: 10px; overflow: hidden; }
-        .blue-padding { position: absolute; top: 6px; bottom: 6px; left: 16px; right: 16px; overflow: hidden; }
+        /* THE FIX: Applying pure Flexbox Centering to the padding boundaries */
+        .normal-padding { position: absolute; top: 4px; bottom: 4px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .blue-padding { position: absolute; top: 6px; bottom: 6px; left: 16px; right: 16px; display: flex; align-items: center; justify-content: center; text-align: center; }
         
         .split-row { display: flex !important; flex-direction: row; }
         .split-half { flex: 1; position: relative; height: 100%; display: block; }
         .split-divider { flex: 0 0 20px; display: flex; align-items: center; justify-content: center; position: relative; height: 100%; z-index: 10; }
         
-        .split-padding { position: absolute; top: 2px; bottom: 2px; left: 6px; right: 6px; overflow: hidden; }
-        .split-blue-padding { position: absolute; top: 4px; bottom: 4px; left: 8px; right: 8px; overflow: hidden; }
+        .split-padding { position: absolute; top: 2px; bottom: 2px; left: 6px; right: 6px; display: flex; align-items: center; justify-content: center; text-align: center; }
+        .split-blue-padding { position: absolute; top: 4px; bottom: 4px; left: 8px; right: 8px; display: flex; align-items: center; justify-content: center; text-align: center; }
 
-        /* FIXED */
-        .fit-text { width: 100%; height: 100%; text-align: center; }
-        .textFitted { line-height: 1.15 !important; text-align: center; width: 100%; }
+        .textFitted { display: block !important; line-height: 1.15 !important; text-align: center; width: 100%; }
         
         .plus-icon { color: #000000; font-weight: 900; font-size: 18px; line-height: 1; }
         .line-divider { border-left: 1px solid #FFFFFF; height: 60%; }
@@ -149,13 +147,13 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            textFit(document.getElementsByClassName('normal-title'), {multiLine: true, alignVert: true, alignHoriz: true, maxFontSize: 24, minFontSize: 6});
-            textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, alignVert: true, alignHoriz: true, maxFontSize: 16, minFontSize: 6});
-            textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, alignVert: true, alignHoriz: true, maxFontSize: 20, minFontSize: 6});
+            textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 24, minFontSize: 6});
+            textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 16, minFontSize: 6});
+            textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 20, minFontSize: 6});
 
-            textFit(document.getElementsByClassName('split-title'), {multiLine: true, alignVert: true, alignHoriz: true, maxFontSize: 18, minFontSize: 6});
-            textFit(document.getElementsByClassName('split-sub'), {multiLine: true, alignVert: true, alignHoriz: true, maxFontSize: 12, minFontSize: 6});
-            textFit(document.getElementsByClassName('split-offer'), {multiLine: true, alignVert: true, alignHoriz: true, maxFontSize: 16, minFontSize: 6});
+            textFit(document.getElementsByClassName('split-title'), {multiLine: true, maxFontSize: 18, minFontSize: 6});
+            textFit(document.getElementsByClassName('split-sub'), {multiLine: true, maxFontSize: 12, minFontSize: 6});
+            textFit(document.getElementsByClassName('split-offer'), {multiLine: true, maxFontSize: 16, minFontSize: 6});
 
             function equalizeSizes(targetClass) {
                 var nodes = document.querySelectorAll('.' + targetClass + ' .textFitted');
