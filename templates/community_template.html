@@ -33,7 +33,7 @@
         
         .course-box { 
             display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; 
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.3); background-color: #003B5C;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.3); background-color: #003B5C; min-height: 0;
             {% if data.courses|length == 1 %} width: 550px; height: 100%;
             {% elif data.courses|length == 2 %} width: 480px; height: 100%;
             {% elif data.courses|length == 3 %} width: 330px; height: 100%;
@@ -41,30 +41,25 @@
             {% endif %}
         }
 
-        /* * THE ABSOLUTE BOUNDING BOX FIX:
-         * We stripped all padding out of the parent strips. We place an invisible, rigid box 
-         * INSIDE the strip, forcing textFit to obey strict pixel borders.
-         */
         .strip-container { position: relative; width: 100%; text-align: center; font-weight: 800; display: block; }
         .yellow-strip { background-color: #FFDE00; color: #000000; flex: 1.8; text-transform: uppercase; }
         .black-strip { background-color: #000000; color: #FFFFFF; flex: 1; }
         .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
         .blue-offer-box { position: relative; background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; }
 
-        /* The invisible forcefields. The text physically cannot grow past these coordinates */
         .normal-padding { position: absolute; top: 4px; bottom: 4px; left: 8px; right: 8px; }
-        .blue-padding { position: absolute; top: 8px; bottom: 8px; left: 24px; right: 24px; } /* Massive side-walls */
+        .blue-padding { position: absolute; top: 6px; bottom: 6px; left: 16px; right: 16px; } 
         
         .split-row { display: flex !important; flex-direction: row; }
         .split-half { flex: 1; position: relative; height: 100%; }
         .split-divider { flex: 0 0 30px; display: flex; align-items: center; justify-content: center; position: relative; height: 100%; z-index: 10; }
         
         .split-padding { position: absolute; top: 4px; bottom: 4px; left: 8px; right: 8px; }
-        .split-blue-padding { position: absolute; top: 6px; bottom: 6px; left: 14px; right: 14px; }
+        .split-blue-padding { position: absolute; top: 6px; bottom: 6px; left: 12px; right: 12px; }
 
-        /* Text is allowed to be visible to prevent edge-cropping, but it is locked to the padding box */
-        .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; overflow: visible; }
-        .textFitted { display: inline-block !important; line-height: 1.15 !important; text-align: center; width: 100%; text-wrap: balance; }
+        .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; }
+        /* FIXED: Removed the buggy text-wrap feature. Set explicitly to block. */
+        .textFitted { display: block !important; line-height: 1.15 !important; text-align: center; width: 100%; }
         
         .plus-icon { color: #000000; font-weight: 900; font-size: 28px; line-height: 1; }
         .line-divider { border-left: 2px solid #FFFFFF; height: 60%; }
@@ -154,7 +149,6 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Absolute bounding box forces the script to shrink it natively down to 6px if necessary.
             textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 40, minFontSize: 6});
             textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 28, minFontSize: 6});
             textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 34, minFontSize: 6});
