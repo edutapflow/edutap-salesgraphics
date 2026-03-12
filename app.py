@@ -317,39 +317,21 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                         zip_file.write(final_output_path, arcname=task["name"])
                         os.remove(final_output_path) 
                 
-                st.success("✅ Done. Note: Download Your Files First Before Refershing or Generating Next Graphics")
-                safe_camp_name = sale_name.replace(" ", "_")
-                st.download_button(
-                    label="📦 Download All Assets (ZIP)",
-                    data=zip_buffer.getvalue(),
-                    file_name=f"{safe_camp_name}_Assets.zip",
-                    mime="application/zip",
-                    use_container_width=True
-                )
-                
                 # --- GENERATE TELEGRAM PROMO TEXT ---
-                st.divider()
-                st.subheader("📝 Telegram Promo Text")
-                st.markdown("Hover over the block below and click the **Copy** icon in the top right corner.")
-                
-                # 1. Format Discount String
                 if discount_type == "Flat":
                     dist_str = f"flat {flat_val}%"
                 else:
                     dist_str = f"flat {flat_val}% + additional {add_val}%"
                     
-                # 2. Format Date String
                 end_date = validity_dates[1]
                 ordinal_day = get_ordinal(end_date.day)
                 formatted_month_year = end_date.strftime("%B, %Y")
                 final_date_str = f"{ordinal_day} {formatted_month_year}"
                 
-                # 3. Format Course List
                 course_lines = []
                 for c in courses:
                     if c.get("is_split"):
                         title = f"{c['exam1_title']} + {c['exam2_title']}"
-                        # Combine and deduplicate offerings
                         combined_offs = []
                         for o in c['offer1'] + c['offer2']:
                             if o not in combined_offs:
@@ -366,7 +348,6 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                         
                 course_list_str = "\n".join(course_lines)
                 
-                # 4. Construct Final Text
                 promo_text = f"""**😀😀 {sale_name} is here!!**
 
 🥳🥳 Avail a **{dist_str} off** on:
@@ -379,8 +360,28 @@ The offer is valid till {final_date_str}!!
 
 🎯 Subscribe here: https://edutap.in/courses/"""
 
-                # Render copyable code block
-                st.code(promo_text, language="text")
+                # Save everything to Session State so it survives button clicks!
+                st.session_state['generated_zip'] = zip_buffer.getvalue()
+                st.session_state['generated_promo'] = promo_text
+                st.session_state['generated_name'] = sale_name.replace(" ", "_")
+                st.session_state['generation_done'] = True
                 
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
+
+# --- SECTION 4: Output Rendering (Safely outside the button logic) ---
+if st.session_state.get('generation_done'):
+    st.success("✅ Done. Note: Download Your Files First Before Refreshing or Generating Next Graphics")
+    
+    st.download_button(
+        label="📦 Download All Assets (ZIP)",
+        data=st.session_state['generated_zip'],
+        file_name=f"{st.session_state['generated_name']}_Assets.zip",
+        mime="application/zip",
+        use_container_width=True
+    )
+    
+    st.divider()
+    st.subheader("📝 Telegram Promo Text")
+    st.markdown("Hover over the block below and click the **Copy** icon in the top right corner.")
+    st.code(st.session_state['generated_promo'], language="text")
