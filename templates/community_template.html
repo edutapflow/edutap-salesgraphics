@@ -31,6 +31,7 @@
 
         .course-container { position: absolute; left: 17px; top: 635px; width: 1045px; height: 310px; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 20px; }
         
+        /* Main container keeps overflow: hidden to protect the rounded corners */
         .course-box { 
             display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; 
             box-shadow: 0px 4px 10px rgba(0,0,0,0.3); background-color: #003B5C; min-height: 0;
@@ -41,21 +42,20 @@
             {% endif %}
         }
 
-        .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 4px 10px; text-align: center; font-weight: 800; line-height: 1.1; min-height: 0; overflow: hidden; }
+        /* REMOVED overflow: hidden from inner boxes so font rendering bugs don't slice letters */
+        .strip-container { width: 100%; display: flex; align-items: center; justify-content: center; padding: 4px 10px; text-align: center; font-weight: 800; line-height: 1.1; min-height: 0; }
         .yellow-strip { background-color: #FFDE00; color: #000000; flex: 1.8; text-transform: uppercase; }
         .black-strip { background-color: #000000; color: #FFFFFF; flex: 1; }
         .white-strip { background-color: #FFFFFF; color: #000000; flex: 1; }
         
-        /* RESTORED THICK PADDING: The text is now forced to stay away from the edges */
-        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 8px 18px; display: flex; align-items: center; justify-content: center; min-height: 0; overflow: hidden; }
+        .blue-offer-box { background-color: #003B5C; color: #FFFFFF; flex: 2.2; width: 100%; padding: 8px 18px; display: flex; align-items: center; justify-content: center; min-height: 0; }
         
-        .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; overflow: hidden; }
+        .fit-text { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; text-align: center; }
         .textFitted { display: inline-block !important; line-height: 1.15 !important; text-align: center; width: 100%; }
 
         .split-row { flex-direction: row; padding: 0 !important; }
         
-        /* RESTORED THICK PADDING for split boxes */
-        .split-half { flex: 1; padding: 6px 12px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; min-width: 0; min-height: 0; overflow: hidden; }
+        .split-half { flex: 1; padding: 6px 12px; display: flex; align-items: center; justify-content: center; flex-direction: column; height: 100%; min-width: 0; min-height: 0; }
         
         .split-divider { flex: 0 0 30px; display: flex; align-items: center; justify-content: center; position: relative; height: 100%; }
         .plus-icon { color: #000000; font-weight: 900; font-size: 28px; line-height: 1; }
@@ -140,7 +140,6 @@
     </div>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // LOWERED MIN FONT SIZE (8px): This gives the script permission to shrink the text deeply so it perfectly clears the thick padding boundaries without ever cropping.
             textFit(document.getElementsByClassName('normal-title'), {multiLine: true, maxFontSize: 40, minFontSize: 8});
             textFit(document.getElementsByClassName('normal-sub'), {multiLine: true, maxFontSize: 28, minFontSize: 8});
             textFit(document.getElementsByClassName('normal-offer'), {multiLine: true, maxFontSize: 36, minFontSize: 8});
