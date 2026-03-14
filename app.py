@@ -40,9 +40,9 @@ CONFIG_FILE = "dropdown_config.json"
 def load_config():
     default_config = {
         "CAMPAIGNS": ["Super Sale", "Maha Sale", "Flash Sale", "Wow Sale"],
-        "GLOBAL_OFFERINGS": ["Gold Course", "Silver Course", "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", "Live Crash Course", "Special Subjects", "Super Crash Course", "Banker's Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"],
+        "GLOBAL_OFFERINGS": ["Gold Course", "Silver Course", "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", "Live Crash Course", "Special Subjects", "Special Subject Course", "Super Crash Course", "Banker's Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"],
         "SECTORS": ["Banking Exams"],
-        "SUBJECTS_LIST": ["Quant", "Reasoning", "English", "AFM", "PPB", "IF&IFS", "RBWM", "ABM", "BFM", "ABFM", "BRBL", "Maths"],
+        "SUBJECTS_LIST": ["Quant", "Reasoning", "English", "AFM", "PPB", "IF&IFS", "RBWM", "ABM", "BFM", "ABFM", "BRBL", "Maths", "IE-IFS", "IR & Labor Laws", "Accountancy"],
         "EXAMS_SCHEMA": {
             "RBI Grade A/B": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
             "SEBI Grade A": {"has_stream": True, "has_subject": False, "streams": ["General Stream"], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
@@ -51,18 +51,36 @@ def load_config():
             "PFRDA Grade A": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
             "IFSCA Grade A": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
             "UPSC CSAT": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Master Course", "Live Crash Course"]},
-            "UPSC EPFO APFC & EO/AO": {"has_stream": False, "has_subject": True, "streams": [], "subjects": ["Individual Subjects"], "offerings": ["Test Series", "Crash Course", "Master Course", "Special Subjects"]},
-            "JAIIB": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Master Course", "Crash Course", "Test Series"]},
-            "JAIIB (Individual Subjects)": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Master Course", "Super Crash Course", "Banker's Capsule Course"]}
+            "UPSC EPFO APFC & EO/AO": {
+                "has_stream": False, "has_subject": True, "streams": [], 
+                "subjects": ["IR & Labor Laws", "Accountancy"], 
+                "offerings_without_subject": ["Master Course", "Special Subject Course"],
+                "offerings_with_subject": ["Master Course"],
+                "offerings": ["Master Course", "Special Subject Course"]
+            },
+            "JAIIB": {
+                "has_stream": False, "has_subject": True, "streams": [], 
+                "subjects": ["IE-IFS", "PPB", "AFM", "RBWM"], 
+                "offerings_without_subject": ["Master Course", "Crash Course", "Test Series"],
+                "offerings_with_subject": ["Master Course", "Super Crash Course", "Banker's Capsule Course"],
+                "offerings": ["Master Course", "Crash Course", "Test Series"]
+            }
         }
     }
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r") as f:
                 user_config = json.load(f)
-                # Migration check: If old flat config, overwrite with schema
-                if "EXAMS_SCHEMA" not in user_config:
+                
+                # Auto-Migration: Force updates for existing users to the new dynamic logic
+                if "EXAMS_SCHEMA" in user_config:
+                    user_config["EXAMS_SCHEMA"]["JAIIB"] = default_config["EXAMS_SCHEMA"]["JAIIB"]
+                    user_config["EXAMS_SCHEMA"]["UPSC EPFO APFC & EO/AO"] = default_config["EXAMS_SCHEMA"]["UPSC EPFO APFC & EO/AO"]
+                    if "JAIIB (Individual Subjects)" in user_config["EXAMS_SCHEMA"]:
+                        del user_config["EXAMS_SCHEMA"]["JAIIB (Individual Subjects)"]
+                else:
                     return default_config
+                    
                 for k in default_config.keys():
                     if k not in user_config:
                         user_config[k] = default_config[k]
@@ -107,7 +125,7 @@ if 'success_popup' in st.session_state:
     st.toast(st.session_state.success_popup, icon="✅")
     del st.session_state.success_popup
 
-# --- SIDEBAR: Schema Admin Panel ---
+# --- SIDEBAR: Upgraded Schema Admin Panel ---
 with st.sidebar:
     st.header("⚙️ Schema Admin Panel")
     st.markdown("Add new exams dynamically. The UI will adjust automatically.")
@@ -125,7 +143,14 @@ with st.sidebar:
             has_sub = st.checkbox("Uses Subjects?")
             sub_list = st.text_input("Subjects (comma separated)") if has_sub else ""
             
-            allowed_off = st.multiselect("Allowed Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"])
+            if has_sub:
+                off_no_sub = st.multiselect("Offerings (When NO Subject selected)", options=st.session_state.config["GLOBAL_OFFERINGS"])
+                off_with_sub = st.multiselect("Offerings (When Subject IS selected)", options=st.session_state.config["GLOBAL_OFFERINGS"])
+                allowed_off = off_no_sub 
+            else:
+                allowed_off = st.multiselect("Allowed Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"])
+                off_no_sub = allowed_off
+                off_with_sub = allowed_off
             
             if st.button("Save Exam Configuration", use_container_width=True):
                 if new_ex:
@@ -134,14 +159,15 @@ with st.sidebar:
                         "has_subject": has_sub,
                         "streams": [s.strip() for s in str_list.split(",") if s.strip()],
                         "subjects": [s.strip() for s in sub_list.split(",") if s.strip()],
-                        "offerings": allowed_off
+                        "offerings": allowed_off,
+                        "offerings_without_subject": off_no_sub,
+                        "offerings_with_subject": off_with_sub
                     }
                     save_config(st.session_state.config)
                     st.session_state.success_popup = f"Added {new_ex} to Database!"
                     st.rerun()
                     
         else:
-            # Quick additions for simple lists
             new_item = st.text_input(f"New item for {action}")
             if st.button("➕ Add Item", use_container_width=True):
                 if new_item.strip():
@@ -185,7 +211,7 @@ with st.container():
 
 st.divider()
 
-# --- SECTION 2: Course Offerings (CONTEXTUAL UI) ---
+# --- SECTION 2: Course Offerings (DYNAMIC UI) ---
 st.header("Course Alignments")
 
 courses = []
@@ -196,7 +222,7 @@ for i, box_id in enumerate(st.session_state.boxes):
     mode = st.radio("Exam Mode", modes, key=f"mode_{box_id}", horizontal=True)
     
     stream_val = ""
-    subject_val = ""
+    subject_val = []
     main_title = ""
     sub_title = ""
     offerings = []
@@ -214,26 +240,38 @@ for i, box_id in enumerate(st.session_state.boxes):
                 stream_val = st.selectbox("Stream", options=schema.get("streams", []), key=f"str_{box_id}")
         with col3:
             if schema.get("has_subject"):
-                subject_val = st.selectbox("Subject", options=schema.get("subjects", []), key=f"sub_{box_id}")
+                # Multi-select subject enabled
+                subject_val = st.multiselect("Subjects", options=schema.get("subjects", []), key=f"sub_{box_id}")
         with col4:
-            offerings = st.multiselect("Offerings", options=schema.get("offerings", []), key=f"off_{box_id}")
+            # Dynamic Offering intelligence
+            available_offs = schema.get("offerings", [])
+            if schema.get("has_subject"):
+                if len(subject_val) > 0 and "offerings_with_subject" in schema:
+                    available_offs = schema["offerings_with_subject"]
+                elif len(subject_val) == 0 and "offerings_without_subject" in schema:
+                    available_offs = schema["offerings_without_subject"]
+                    
+            offerings = st.multiselect("Offerings", options=available_offs, key=f"off_{box_id}")
             if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
             
         main_title = exam
         if mode == "Combo (Individual)":
             sub_title = "All Combos"
             
+        subject_str = ", ".join(subject_val) if subject_val else ""
+            
         courses.append({
             "is_split": False, "main_title": main_title.strip(), "sub_title": sub_title.strip(),
-            "stream": stream_val.strip(), "subject": subject_val.strip(), "offerings": offerings
+            "stream": stream_val.strip(), "subject": subject_str.strip(), "offerings": offerings
         })
 
     elif mode == "Single Subject":
         col1, col2, col3, col4 = st.columns(4)
         with col1:
-            subj_title = st.selectbox("Select Subject", options=st.session_state.config["SUBJECTS_LIST"], key=f"subjmode_{box_id}")
+            subj_title_list = st.multiselect("Select Subject(s)", options=st.session_state.config["SUBJECTS_LIST"], key=f"subjmode_{box_id}")
+            subj_title = ", ".join(subj_title_list)
         with col2:
-            target_exam = st.selectbox("Target Exam (Subtitle)", options=[""] + st.session_state.config["SECTORS"] + list(st.session_state.config["EXAMS_SCHEMA"].keys()), key=f"target_{box_id}", help="Leave blank if none")
+            target_exam = st.selectbox("Target Exam (Subtitle)", options=[""] + st.session_state.config["SECTORS"] + list(st.session_state.config["EXAMS_SCHEMA"].keys()), key=f"target_{box_id}")
         with col4:
             offerings = st.multiselect("Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"], key=f"off_{box_id}")
             if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
@@ -263,13 +301,21 @@ for i, box_id in enumerate(st.session_state.boxes):
         with c1:
             ex1 = st.selectbox("Exam", options=list(st.session_state.config["EXAMS_SCHEMA"].keys()), key=f"ex1_{box_id}")
         schema1 = st.session_state.config["EXAMS_SCHEMA"].get(ex1, {})
-        str1 = ""; sub1 = ""
+        str1 = ""; sub1_list = []
         with c2:
             if schema1.get("has_stream"): str1 = st.selectbox("Stream", options=schema1.get("streams", []), key=f"str1_{box_id}")
         with c3:
-            if schema1.get("has_subject"): sub1 = st.selectbox("Subject", options=schema1.get("subjects", []), key=f"sub1_{box_id}")
+            if schema1.get("has_subject"): sub1_list = st.multiselect("Subjects", options=schema1.get("subjects", []), key=f"sub1_{box_id}")
+        
+        available_offs1 = schema1.get("offerings", [])
+        if schema1.get("has_subject"):
+            if len(sub1_list) > 0 and "offerings_with_subject" in schema1:
+                available_offs1 = schema1["offerings_with_subject"]
+            elif len(sub1_list) == 0 and "offerings_without_subject" in schema1:
+                available_offs1 = schema1["offerings_without_subject"]
+                
         with c4:
-            off1 = st.multiselect("Offerings", options=schema1.get("offerings", []), key=f"off1_{box_id}")
+            off1 = st.multiselect("Offerings", options=available_offs1, key=f"off1_{box_id}")
 
         st.markdown("↳ *Right Side (Sector)*")
         c5, c6, c7, c8 = st.columns(4)
@@ -280,9 +326,11 @@ for i, box_id in enumerate(st.session_state.boxes):
             if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
         
         ex2_sub = "SBI + IBPS + RRB<br>(PO + CLERK)" if ex2 == "Banking Exams" else ""
+        sub1_str = ", ".join(sub1_list) if sub1_list else ""
+        
         courses.append({
             "is_split": True, "exam1_title": ex1.strip(), "exam1_sub": "",
-            "stream1": str1.strip(), "subj1": sub1.strip(), "offer1": off1,
+            "stream1": str1.strip(), "subj1": sub1_str.strip(), "offer1": off1,
             "exam2_title": ex2.strip(), "exam2_sub": ex2_sub,
             "stream2": "", "subj2": "", "offer2": off2
         })
@@ -378,6 +426,7 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                                 combined_offs.append(o)
                         offer_str = " | ".join(combined_offs)
                     else:
+                        # SMART FALLBACK HIERARCHY
                         if c.get('main_title'):
                             title = c['main_title']
                         elif c.get('subject'):
