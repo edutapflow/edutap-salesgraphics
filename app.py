@@ -275,15 +275,17 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                 comm_bg = folder_path + "Community_additionaldiscount.png"
                 yt_bg = folder_path + "ytchannelart_additionaldiscount.png"
 
+            safe_camp_name = sale_name.replace(" ", "_")
+
             try:
                 comm_template = env.get_template('community_template.html')
                 yt_template = env.get_template('yt_template.html')
                 
                 tasks = [
-                    {"name": f"{sale_name}_Comm_Standard.png", "bg": comm_bg, "template": comm_template, "use_expiry": False, "size": (1080, 1080)},
-                    {"name": f"{sale_name}_Comm_Expiry.png", "bg": comm_bg, "template": comm_template, "use_expiry": True, "size": (1080, 1080)},
-                    {"name": f"{sale_name}_YT_Standard.png", "bg": yt_bg, "template": yt_template, "use_expiry": False, "size": (1600, 900)},
-                    {"name": f"{sale_name}_YT_Expiry.png", "bg": yt_bg, "template": yt_template, "use_expiry": True, "size": (1600, 900)}
+                    {"name": f"{safe_camp_name}_Comm_Standard.png", "bg": comm_bg, "template": comm_template, "use_expiry": False, "size": (1080, 1080)},
+                    {"name": f"{safe_camp_name}_Comm_Expiry.png", "bg": comm_bg, "template": comm_template, "use_expiry": True, "size": (1080, 1080)},
+                    {"name": f"{safe_camp_name}_YT_Standard.png", "bg": yt_bg, "template": yt_template, "use_expiry": False, "size": (1600, 900)},
+                    {"name": f"{safe_camp_name}_YT_Expiry.png", "bg": yt_bg, "template": yt_template, "use_expiry": True, "size": (1600, 900)}
                 ]
                 
                 with sync_playwright() as p:
@@ -291,8 +293,8 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                     for task in tasks:
                         data_payload["use_expiry"] = task["use_expiry"]
                         rendered_html = task["template"].render(data=data_payload)
-                        safe_name = task['name'].replace(' ', '_')
-                        temp_overlay_name = f"temp_{safe_name}"
+                        
+                        temp_overlay_name = f"temp_{task['name']}"
                         overlay_path = os.path.join(OUTPUT_DIR, temp_overlay_name).replace("\\", "/")
                         final_output_path = os.path.join(OUTPUT_DIR, task["name"]).replace("\\", "/")
                         
@@ -338,7 +340,16 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                                 combined_offs.append(o)
                         offer_str = " | ".join(combined_offs)
                     else:
-                        title = c['main_title']
+                        # THE FIX: Smart Fallback Logic
+                        if c.get('main_title'):
+                            title = c['main_title']
+                        elif c.get('subject'):
+                            title = c['subject']
+                        elif c.get('stream'):
+                            title = c['stream']
+                        else:
+                            title = "Course"
+                            
                         offer_str = " | ".join(c['offerings'])
                         
                     if offer_str:
@@ -360,18 +371,17 @@ The offer is valid till {final_date_str}!!
 
 🎯 Subscribe here: https://edutap.in/courses/"""
 
-                # Save everything to Session State so it survives button clicks!
                 st.session_state['generated_zip'] = zip_buffer.getvalue()
                 st.session_state['generated_promo'] = promo_text
-                st.session_state['generated_name'] = sale_name.replace(" ", "_")
+                st.session_state['generated_name'] = safe_camp_name
                 st.session_state['generation_done'] = True
                 
             except Exception as e:
                 st.error(f"Render Engine Fault: {str(e)}")
 
-# --- SECTION 4: Output Rendering (Safely outside the button logic) ---
+# --- SECTION 4: Output Rendering ---
 if st.session_state.get('generation_done'):
-    st.success("✅ Done. Note: Download Your Files First Before Refreshing or Generating Next Graphics")
+    st.success("✅ Done! Your Assets and Text are ready below.")
     
     st.download_button(
         label="📦 Download All Assets (ZIP)",
