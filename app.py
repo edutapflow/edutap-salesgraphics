@@ -17,7 +17,7 @@ from playwright.sync_api import sync_playwright
 
 # =====================================================================
 # ⚙️ MASTER CONFIGURATION (HARDCODED SINGLE SOURCE OF TRUTH)
-# Edit this dictionary to add, rename, or remove Exams, Subjects, or Offerings.
+# Edit this dictionary to add, rename, or remove Exams permanently.
 # =====================================================================
 APP_CONFIG = {
     "CAMPAIGNS": ["Super Sale", "Maha Sale", "Flash Sale", "Wow Sale"],
@@ -47,7 +47,7 @@ APP_CONFIG = {
         },
         "RBI Grade B": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]
+            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course", "Gold Package", "Silver Package"]
         },
         "SEBI Grade A": {
             "has_stream": True, "has_subject": False, "streams": ["General Stream"], "subjects": [], 
@@ -142,6 +142,89 @@ if 'success_popup' in st.session_state:
     st.toast(st.session_state.success_popup, icon="✅")
     del st.session_state.success_popup
 
+# --- SIDEBAR: Restored Session Admin Panel ---
+with st.sidebar:
+    st.header("⚙️ Session Admin Panel")
+    st.markdown("⚠️ *Notice: Items added here work dynamically for this session, but will reset if the server restarts. To make permanent changes, edit the `APP_CONFIG` dictionary at the top of the `app.py` code.*")
+    
+    admin_pass = st.text_input("Admin Password", type="password")
+    if admin_pass == "addme@123":
+        st.success("Admin Panel Unlocked")
+        
+        action = st.radio("What to add?", ["New Exam", "New Sector", "New Subject", "New Global Offering", "New Campaign"])
+        
+        if action == "New Exam":
+            new_ex = st.text_input("Exam Name")
+            has_str = st.checkbox("Uses Streams?", key="ex_str")
+            str_list = st.text_input("Streams (comma separated)", key="ex_str_l") if has_str else ""
+            has_sub = st.checkbox("Uses Subjects?", key="ex_sub")
+            sub_list = st.text_input("Subjects (comma separated)", key="ex_sub_l") if has_sub else ""
+            
+            if has_sub:
+                off_no_sub = st.multiselect("Offerings (When NO Subject selected)", options=st.session_state.config["GLOBAL_OFFERINGS"], key="ex_off1")
+                off_with_sub = st.multiselect("Offerings (When Subject IS selected)", options=st.session_state.config["GLOBAL_OFFERINGS"], key="ex_off2")
+                allowed_off = off_no_sub 
+            else:
+                allowed_off = st.multiselect("Allowed Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"], key="ex_off3")
+                off_no_sub = allowed_off
+                off_with_sub = allowed_off
+            
+            if st.button("Save Exam to Session", use_container_width=True):
+                if new_ex:
+                    st.session_state.config["EXAMS_SCHEMA"][new_ex] = {
+                        "has_stream": has_str,
+                        "has_subject": has_sub,
+                        "streams": [s.strip() for s in str_list.split(",") if s.strip()],
+                        "subjects": [s.strip() for s in sub_list.split(",") if s.strip()],
+                        "offerings": allowed_off,
+                        "offerings_without_subject": off_no_sub,
+                        "offerings_with_subject": off_with_sub
+                    }
+                    st.session_state.success_popup = f"Added {new_ex} to this session!"
+                    st.rerun()
+                    
+        elif action == "New Sector":
+            new_sec = st.text_input("Sector Name (e.g., Regulatory Bodies)")
+            sec_subtitle = st.text_input("Exams included (Subtitle, e.g., RBI + SEBI + NABARD)")
+            has_str = st.checkbox("Uses Streams?", key="sec_str")
+            str_list = st.text_input("Streams (comma separated)", key="sec_str_l") if has_str else ""
+            has_sub = st.checkbox("Uses Subjects?", key="sec_sub")
+            sub_list = st.text_input("Subjects (comma separated)", key="sec_sub_l") if has_sub else ""
+
+            if has_sub:
+                off_no_sub = st.multiselect("Offerings (When NO Subject selected)", options=st.session_state.config["GLOBAL_OFFERINGS"], key="sec_off1")
+                off_with_sub = st.multiselect("Offerings (When Subject IS selected)", options=st.session_state.config["GLOBAL_OFFERINGS"], key="sec_off2")
+                allowed_off = off_no_sub
+            else:
+                allowed_off = st.multiselect("Allowed Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"], key="sec_off3")
+                off_no_sub = allowed_off
+                off_with_sub = allowed_off
+
+            if st.button("Save Sector to Session", use_container_width=True):
+                if new_sec:
+                    st.session_state.config["SECTORS_SCHEMA"][new_sec] = {
+                        "subtitle": sec_subtitle.strip().replace("\n", "<br>"),
+                        "has_stream": has_str,
+                        "has_subject": has_sub,
+                        "streams": [s.strip() for s in str_list.split(",") if s.strip()],
+                        "subjects": [s.strip() for s in sub_list.split(",") if s.strip()],
+                        "offerings": allowed_off,
+                        "offerings_without_subject": off_no_sub,
+                        "offerings_with_subject": off_with_sub
+                    }
+                    st.session_state.success_popup = f"Added Sector {new_sec} to this session!"
+                    st.rerun()
+                    
+        else:
+            new_item = st.text_input(f"New item for {action}")
+            if st.button("➕ Add Item", use_container_width=True):
+                if new_item.strip():
+                    key_map = {"New Subject": "SUBJECTS_LIST", "New Global Offering": "GLOBAL_OFFERINGS", "New Campaign": "CAMPAIGNS"}
+                    key = key_map[action]
+                    if new_item.strip() not in st.session_state.config[key]:
+                        st.session_state.config[key].append(new_item.strip())
+                        st.session_state.success_popup = f"Added {new_item.strip()} to this session!"
+                        st.rerun()
 
 # --- MAIN DASHBOARD ---
 st.title("EduTap Sale Graphics Generator")
@@ -175,7 +258,7 @@ with st.container():
 
 st.divider()
 
-# --- SECTION 2: Course Offerings (DYNAMIC UI) ---
+# --- SECTION 2: Course Offerings (DYNAMIC UI LOGIC) ---
 st.header("Course Alignments")
 
 courses = []
@@ -192,20 +275,34 @@ for i, box_id in enumerate(st.session_state.boxes):
     offerings = []
     
     if mode in ["Single Exam", "Combo (Individual)"]:
-        col1, col2, col3, col4 = st.columns(4)
+        # Pre-fetch the currently selected exam from session state to determine column count
+        exam_key = f"ex_{box_id}"
+        current_exam = st.session_state.get(exam_key, None)
+        schema = st.session_state.config["EXAMS_SCHEMA"].get(current_exam, {}) if current_exam else {}
         
-        with col1:
-            exam = st.selectbox("Select Exam", options=list(st.session_state.config["EXAMS_SCHEMA"].keys()), index=None, key=f"ex_{box_id}")
-            
-        schema = st.session_state.config["EXAMS_SCHEMA"].get(exam, {}) if exam else {}
+        # Dynamic Column Generation (Fixes the red gap)
+        num_cols = 2
+        if schema.get("has_stream"): num_cols += 1
+        if schema.get("has_subject"): num_cols += 1
         
-        with col2:
-            if schema.get("has_stream"):
+        cols = st.columns(num_cols)
+        c_idx = 0
+        
+        with cols[c_idx]:
+            exam = st.selectbox("Select Exam", options=list(st.session_state.config["EXAMS_SCHEMA"].keys()), index=None, key=exam_key)
+        c_idx += 1
+        
+        if schema.get("has_stream"):
+            with cols[c_idx]:
                 stream_val = st.selectbox("Stream", options=schema.get("streams", []), index=None, key=f"str_{box_id}")
-        with col3:
-            if schema.get("has_subject"):
+            c_idx += 1
+            
+        if schema.get("has_subject"):
+            with cols[c_idx]:
                 subject_val = st.multiselect("Subjects", options=schema.get("subjects", []), key=f"sub_{box_id}")
-        with col4:
+            c_idx += 1
+            
+        with cols[c_idx]:
             available_offs = schema.get("offerings", [])
             if schema.get("has_subject"):
                 if len(subject_val) > 0 and "offerings_with_subject" in schema:
@@ -214,7 +311,8 @@ for i, box_id in enumerate(st.session_state.boxes):
                     available_offs = schema["offerings_without_subject"]
                     
             offerings = st.multiselect("Offerings", options=available_offs, key=f"off_{box_id}")
-            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            if len(st.session_state.boxes) > 1: 
+                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
             
         main_title = exam if exam else ""
         if mode == "Combo (Individual)":
@@ -228,16 +326,17 @@ for i, box_id in enumerate(st.session_state.boxes):
         })
 
     elif mode == "Subject":
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
+        cols = st.columns(3)
+        with cols[0]:
             subj_title_list = st.multiselect("Select Subject(s)", options=st.session_state.config["SUBJECTS_LIST"], key=f"subjmode_{box_id}")
             subj_title = ", ".join(subj_title_list)
-        with col2:
+        with cols[1]:
             target_opts = list(st.session_state.config["SECTORS_SCHEMA"].keys()) + list(st.session_state.config["EXAMS_SCHEMA"].keys())
             target_exam = st.selectbox("Target Exam (Subtitle)", options=target_opts, index=None, key=f"target_{box_id}")
-        with col4:
+        with cols[2]:
             offerings = st.multiselect("Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"], key=f"off_{box_id}")
-            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            if len(st.session_state.boxes) > 1: 
+                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
             
         courses.append({
             "is_split": False, "main_title": subj_title.strip(), "sub_title": (target_exam or "").strip(),
@@ -245,19 +344,32 @@ for i, box_id in enumerate(st.session_state.boxes):
         })
 
     elif mode == "Sector":
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            sector = st.selectbox("Select Sector", options=list(st.session_state.config["SECTORS_SCHEMA"].keys()), index=None, key=f"sec_{box_id}")
-            
-        schema = st.session_state.config["SECTORS_SCHEMA"].get(sector, {}) if sector else {}
+        sec_key = f"sec_{box_id}"
+        current_sec = st.session_state.get(sec_key, None)
+        schema = st.session_state.config["SECTORS_SCHEMA"].get(current_sec, {}) if current_sec else {}
         
-        with col2:
-            if schema.get("has_stream"):
+        num_cols = 2
+        if schema.get("has_stream"): num_cols += 1
+        if schema.get("has_subject"): num_cols += 1
+        
+        cols = st.columns(num_cols)
+        c_idx = 0
+        
+        with cols[c_idx]:
+            sector = st.selectbox("Select Sector", options=list(st.session_state.config["SECTORS_SCHEMA"].keys()), index=None, key=sec_key)
+        c_idx += 1
+        
+        if schema.get("has_stream"):
+            with cols[c_idx]:
                 stream_val = st.selectbox("Stream", options=schema.get("streams", []), index=None, key=f"sec_str_{box_id}")
-        with col3:
-            if schema.get("has_subject"):
+            c_idx += 1
+            
+        if schema.get("has_subject"):
+            with cols[c_idx]:
                 subject_val = st.multiselect("Subjects", options=schema.get("subjects", []), key=f"sec_sub_{box_id}")
-        with col4:
+            c_idx += 1
+            
+        with cols[c_idx]:
             available_offs = schema.get("offerings", [])
             if schema.get("has_subject"):
                 if len(subject_val) > 0 and "offerings_with_subject" in schema:
@@ -266,9 +378,10 @@ for i, box_id in enumerate(st.session_state.boxes):
                     available_offs = schema["offerings_without_subject"]
                     
             offerings = st.multiselect("Offerings", options=available_offs, key=f"sec_off_{box_id}")
-            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            if len(st.session_state.boxes) > 1: 
+                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
             
-        sub_t = schema.get("subtitle", "")
+        sub_t = schema.get("subtitle", "") if sector else ""
         subject_str = ", ".join(subject_val) if subject_val else ""
         
         courses.append({
@@ -278,51 +391,77 @@ for i, box_id in enumerate(st.session_state.boxes):
 
     elif mode == "Combo (Individual + Sector)":
         st.markdown("↳ *Left Side (Exam)*")
-        c1, c2, c3, c4 = st.columns(4)
-        with c1:
-            ex1 = st.selectbox("Exam", options=list(st.session_state.config["EXAMS_SCHEMA"].keys()), index=None, key=f"ex1_{box_id}")
-        schema1 = st.session_state.config["EXAMS_SCHEMA"].get(ex1, {}) if ex1 else {}
+        ex1_key = f"ex1_{box_id}"
+        curr_ex1 = st.session_state.get(ex1_key, None)
+        sch1 = st.session_state.config["EXAMS_SCHEMA"].get(curr_ex1, {}) if curr_ex1 else {}
         
-        str1 = ""; sub1_list = []
-        with c2:
-            if schema1.get("has_stream"): str1 = st.selectbox("Stream", options=schema1.get("streams", []), index=None, key=f"str1_{box_id}")
-        with c3:
-            if schema1.get("has_subject"): sub1_list = st.multiselect("Subjects", options=schema1.get("subjects", []), key=f"sub1_{box_id}")
+        num_cols1 = 2
+        if sch1.get("has_stream"): num_cols1 += 1
+        if sch1.get("has_subject"): num_cols1 += 1
         
-        available_offs1 = schema1.get("offerings", [])
-        if schema1.get("has_subject"):
-            if len(sub1_list) > 0 and "offerings_with_subject" in schema1:
-                available_offs1 = schema1["offerings_with_subject"]
-            elif len(sub1_list) == 0 and "offerings_without_subject" in schema1:
-                available_offs1 = schema1["offerings_without_subject"]
-                
-        with c4:
+        c1 = st.columns(num_cols1)
+        i1 = 0
+        with c1[i1]:
+            ex1 = st.selectbox("Exam", options=list(st.session_state.config["EXAMS_SCHEMA"].keys()), index=None, key=ex1_key)
+        i1 += 1
+        
+        str1 = ""
+        if sch1.get("has_stream"):
+            with c1[i1]: str1 = st.selectbox("Stream", options=sch1.get("streams", []), index=None, key=f"str1_{box_id}")
+            i1 += 1
+            
+        sub1_list = []
+        if sch1.get("has_subject"):
+            with c1[i1]: sub1_list = st.multiselect("Subjects", options=sch1.get("subjects", []), key=f"sub1_{box_id}")
+            i1 += 1
+            
+        with c1[i1]:
+            available_offs1 = sch1.get("offerings", [])
+            if sch1.get("has_subject"):
+                if len(sub1_list) > 0 and "offerings_with_subject" in sch1:
+                    available_offs1 = sch1["offerings_with_subject"]
+                elif len(sub1_list) == 0 and "offerings_without_subject" in sch1:
+                    available_offs1 = sch1["offerings_without_subject"]
             off1 = st.multiselect("Offerings", options=available_offs1, key=f"off1_{box_id}")
 
         st.markdown("↳ *Right Side (Sector)*")
-        c5, c6, c7, c8 = st.columns(4)
-        with c5:
-            ex2 = st.selectbox("Sector", options=list(st.session_state.config["SECTORS_SCHEMA"].keys()), index=None, key=f"ex2_{box_id}")
-        schema2 = st.session_state.config["SECTORS_SCHEMA"].get(ex2, {}) if ex2 else {}
+        ex2_key = f"ex2_{box_id}"
+        curr_ex2 = st.session_state.get(ex2_key, None)
+        sch2 = st.session_state.config["SECTORS_SCHEMA"].get(curr_ex2, {}) if curr_ex2 else {}
         
-        str2 = ""; sub2_list = []
-        with c6:
-            if schema2.get("has_stream"): str2 = st.selectbox("Stream", options=schema2.get("streams", []), index=None, key=f"str2_{box_id}")
-        with c7:
-            if schema2.get("has_subject"): sub2_list = st.multiselect("Subjects", options=schema2.get("subjects", []), key=f"sub2_{box_id}")
+        num_cols2 = 2
+        if sch2.get("has_stream"): num_cols2 += 1
+        if sch2.get("has_subject"): num_cols2 += 1
+        
+        c2 = st.columns(num_cols2)
+        i2 = 0
+        
+        with c2[i2]:
+            ex2 = st.selectbox("Sector", options=list(st.session_state.config["SECTORS_SCHEMA"].keys()), index=None, key=ex2_key)
+        i2 += 1
+        
+        str2 = ""
+        if sch2.get("has_stream"):
+            with c2[i2]: str2 = st.selectbox("Stream", options=sch2.get("streams", []), index=None, key=f"str2_{box_id}")
+            i2 += 1
             
-        available_offs2 = schema2.get("offerings", [])
-        if schema2.get("has_subject"):
-            if len(sub2_list) > 0 and "offerings_with_subject" in schema2:
-                available_offs2 = schema2["offerings_with_subject"]
-            elif len(sub2_list) == 0 and "offerings_without_subject" in schema2:
-                available_offs2 = schema2["offerings_without_subject"]
-                
-        with c8:
+        sub2_list = []
+        if sch2.get("has_subject"):
+            with c2[i2]: sub2_list = st.multiselect("Subjects", options=sch2.get("subjects", []), key=f"sub2_{box_id}")
+            i2 += 1
+            
+        with c2[i2]:
+            available_offs2 = sch2.get("offerings", [])
+            if sch2.get("has_subject"):
+                if len(sub2_list) > 0 and "offerings_with_subject" in sch2:
+                    available_offs2 = sch2["offerings_with_subject"]
+                elif len(sub2_list) == 0 and "offerings_without_subject" in sch2:
+                    available_offs2 = sch2["offerings_without_subject"]
             off2 = st.multiselect("Offerings", options=available_offs2, key=f"off2_{box_id}")
-            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            if len(st.session_state.boxes) > 1: 
+                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
         
-        ex2_sub = schema2.get("subtitle", "")
+        ex2_sub = sch2.get("subtitle", "") if ex2 else ""
         sub1_str = ", ".join(sub1_list) if sub1_list else ""
         sub2_str = ", ".join(sub2_list) if sub2_list else ""
         
