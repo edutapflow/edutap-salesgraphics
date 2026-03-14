@@ -22,44 +22,47 @@ def get_ordinal(n):
         return str(n) + 'th'
     return str(n) + {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
 
-# --- UI Configuration (MUST BE THE VERY FIRST STREAMLIT COMMAND) ---
+# --- UI Configuration ---
 st.set_page_config(page_title="EduTap Asset Generator", layout="wide", initial_sidebar_state="collapsed")
 
-# --- Cloud Server Chrome Installer ---
 @st.cache_resource
 def install_playwright():
     os.system("playwright install chromium")
-
 install_playwright()
 
-# --- Directory Setup ---
 OUTPUT_DIR = os.path.abspath("output").replace("\\", "/")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 env = Environment(loader=FileSystemLoader('templates'))
 
-# --- Persistent Data Configuration ---
 CONFIG_FILE = "dropdown_config.json"
 
+# --- SMART SCHEMA CONFIGURATION ---
 def load_config():
     default_config = {
         "CAMPAIGNS": ["Super Sale", "Maha Sale", "Flash Sale", "Wow Sale"],
-        "EXAMS": [
-            "", "RBI Grade B", "RBI Grade A/B", "SEBI Grade A", "NABARD Grade A", 
-            "IRDAI Grade A", "PFRDA Grade A", "IFSCA Grade A", "UPSC CSAT", 
-            "UPSC EPFO APFC & EO/AO", "JAIIB", "Banking Exams"
-        ],
-        "STREAMS": ["", "General Stream"],
-        "SUBJECTS": ["", "Quant", "Reasoning", "English", "AFM", "PPB", "IF&IFS", "RBWM", "ABM", "BFM", "ABFM", "BRBL", "Maths"],
-        "OFFERINGS": [
-            "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", 
-            "Live Crash Course", "Special Subjects", "Super Crash Course", 
-            "Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"
-        ]
+        "GLOBAL_OFFERINGS": ["Gold Course", "Silver Course", "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", "Live Crash Course", "Special Subjects", "Super Crash Course", "Banker's Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"],
+        "SECTORS": ["Banking Exams"],
+        "SUBJECTS_LIST": ["Quant", "Reasoning", "English", "AFM", "PPB", "IF&IFS", "RBWM", "ABM", "BFM", "ABFM", "BRBL", "Maths"],
+        "EXAMS_SCHEMA": {
+            "RBI Grade A/B": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
+            "SEBI Grade A": {"has_stream": True, "has_subject": False, "streams": ["General Stream"], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
+            "NABARD Grade A": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
+            "IRDAI Grade A": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
+            "PFRDA Grade A": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
+            "IFSCA Grade A": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]},
+            "UPSC CSAT": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Test Series", "Master Course", "Live Crash Course"]},
+            "UPSC EPFO APFC & EO/AO": {"has_stream": False, "has_subject": True, "streams": [], "subjects": ["Individual Subjects"], "offerings": ["Test Series", "Crash Course", "Master Course", "Special Subjects"]},
+            "JAIIB": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Master Course", "Crash Course", "Test Series"]},
+            "JAIIB (Individual Subjects)": {"has_stream": False, "has_subject": False, "streams": [], "subjects": [], "offerings": ["Master Course", "Super Crash Course", "Banker's Capsule Course"]}
+        }
     }
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE, "r") as f:
                 user_config = json.load(f)
+                # Migration check: If old flat config, overwrite with schema
+                if "EXAMS_SCHEMA" not in user_config:
+                    return default_config
                 for k in default_config.keys():
                     if k not in user_config:
                         user_config[k] = default_config[k]
@@ -84,15 +87,13 @@ if 'authenticated' not in st.session_state:
 
 if not st.session_state.authenticated:
     st.title("🔒 Access Restricted")
-    st.markdown("Please enter the passcode to access the EduTap Asset Generator.")
     app_password = st.text_input("Passcode", type="password")
-    
     if st.button("Unlock App"):
         if app_password == "sale@321":
             st.session_state.authenticated = True
             st.rerun()
         else:
-            st.error("Incorrect Passcode. Access Denied.")
+            st.error("Incorrect Passcode.")
     st.stop() 
 
 def add_box():
@@ -106,27 +107,51 @@ if 'success_popup' in st.session_state:
     st.toast(st.session_state.success_popup, icon="✅")
     del st.session_state.success_popup
 
-# --- SIDEBAR ---
+# --- SIDEBAR: Schema Admin Panel ---
 with st.sidebar:
-    st.header("⚙️ Data Management")
+    st.header("⚙️ Schema Admin Panel")
+    st.markdown("Add new exams dynamically. The UI will adjust automatically.")
+    
     admin_pass = st.text_input("Admin Password", type="password")
-    if admin_pass == "Addme@123":
+    if admin_pass == "addme@123":
         st.success("Admin Panel Unlocked")
-        category_to_edit = st.selectbox("Select List to Update", ["Sale Campaigns", "Exams", "Streams", "Subjects", "Offerings"])
-        new_item = st.text_input(f"New item for {category_to_edit}")
-        if st.button("➕ Add Item", use_container_width=True):
-            if new_item.strip():
-                cat_map = {"Sale Campaigns": "CAMPAIGNS", "Exams": "EXAMS", "Streams": "STREAMS", "Subjects": "SUBJECTS", "Offerings": "OFFERINGS"}
-                key = cat_map[category_to_edit]
-                if new_item.strip() not in st.session_state.config[key]:
-                    st.session_state.config[key].append(new_item.strip())
+        
+        action = st.radio("What to add?", ["New Exam", "New Subject", "New Sector", "New Global Offering", "New Campaign"])
+        
+        if action == "New Exam":
+            new_ex = st.text_input("Exam Name")
+            has_str = st.checkbox("Uses Streams?")
+            str_list = st.text_input("Streams (comma separated)") if has_str else ""
+            has_sub = st.checkbox("Uses Subjects?")
+            sub_list = st.text_input("Subjects (comma separated)") if has_sub else ""
+            
+            allowed_off = st.multiselect("Allowed Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"])
+            
+            if st.button("Save Exam Configuration", use_container_width=True):
+                if new_ex:
+                    st.session_state.config["EXAMS_SCHEMA"][new_ex] = {
+                        "has_stream": has_str,
+                        "has_subject": has_sub,
+                        "streams": [s.strip() for s in str_list.split(",") if s.strip()],
+                        "subjects": [s.strip() for s in sub_list.split(",") if s.strip()],
+                        "offerings": allowed_off
+                    }
                     save_config(st.session_state.config)
-                    st.session_state.success_popup = f"'{new_item.strip()}' added!"
-                    st.rerun() 
-                else:
-                    st.warning("Item already exists.")
-    elif admin_pass != "":
-        st.error("Incorrect Password.")
+                    st.session_state.success_popup = f"Added {new_ex} to Database!"
+                    st.rerun()
+                    
+        else:
+            # Quick additions for simple lists
+            new_item = st.text_input(f"New item for {action}")
+            if st.button("➕ Add Item", use_container_width=True):
+                if new_item.strip():
+                    key_map = {"New Subject": "SUBJECTS_LIST", "New Sector": "SECTORS", "New Global Offering": "GLOBAL_OFFERINGS", "New Campaign": "CAMPAIGNS"}
+                    key = key_map[action]
+                    if new_item.strip() not in st.session_state.config[key]:
+                        st.session_state.config[key].append(new_item.strip())
+                        save_config(st.session_state.config)
+                        st.session_state.success_popup = f"Added {new_item.strip()}!"
+                        st.rerun()
 
 # --- MAIN DASHBOARD ---
 st.title("EduTap Sale Graphics Generator")
@@ -154,99 +179,112 @@ with st.container():
         if len(validity_dates) == 2:
             start_d, end_d = validity_dates
             if start_d.month == end_d.month and start_d.year == end_d.year:
-                validity_text = f"*Valid: {start_d.day} to {end_d.day} {start_d.strftime('%b %Y')}*"
+                validity_text = f"*Valid: {start_d.day} to {end_d.day} {start_d.strftime('%B %Y')}*"
             else:
-                validity_text = f"*Valid: {start_d.day} {start_d.strftime('%b')} to {end_d.day} {end_d.strftime('%b %Y')}*"
+                validity_text = f"*Valid: {start_d.day} {start_d.strftime('%B')} to {end_d.day} {end_d.strftime('%B %Y')}*"
 
 st.divider()
 
-# --- SECTION 2: Course Offerings ---
+# --- SECTION 2: Course Offerings (CONTEXTUAL UI) ---
 st.header("Course Alignments")
 
 courses = []
 for i, box_id in enumerate(st.session_state.boxes):
     st.markdown(f"**Course Box {i+1}**")
     
-    mode = st.radio(
-        "Exam Mode", 
-        ["Single Exam", "Sector", "Combo (Individual)", "Combo (Individual + Sector)"], 
-        key=f"mode_{box_id}", 
-        horizontal=True
-    )
+    modes = ["Single Exam", "Single Subject", "Sector", "Combo (Individual)", "Combo (Individual + Sector)"]
+    mode = st.radio("Exam Mode", modes, key=f"mode_{box_id}", horizontal=True)
     
-    if mode != "Combo (Individual + Sector)":
+    stream_val = ""
+    subject_val = ""
+    main_title = ""
+    sub_title = ""
+    offerings = []
+    
+    if mode in ["Single Exam", "Combo (Individual)"]:
         col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            if mode == "Single Exam" or mode == "Combo (Individual)":
-                main_exam = st.selectbox("Select Exam", options=st.session_state.config["EXAMS"], key=f"ex_{box_id}")
-            else:
-                main_exam = st.selectbox("Select Sector", options=["Bank Exams"], key=f"sec_{box_id}")
-        with col2:
-            stream = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str_{box_id}")
-        with col3:
-            subject = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub_{box_id}")
-        with col4:
-            offerings = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off_{box_id}")
-            st.write("&nbsp;") 
-            if len(st.session_state.boxes) > 1:
-                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
         
-        main_title = main_exam
-        sub_title = ""
-        if mode == "Sector" and main_exam == "Bank Exams":
-            sub_title = "SBI + IBPS + RRB<br>(PO + CLERK)"
-        elif mode == "Combo (Individual)":
+        with col1:
+            exam = st.selectbox("Select Exam", options=list(st.session_state.config["EXAMS_SCHEMA"].keys()), key=f"ex_{box_id}")
+            
+        schema = st.session_state.config["EXAMS_SCHEMA"].get(exam, {})
+        
+        with col2:
+            if schema.get("has_stream"):
+                stream_val = st.selectbox("Stream", options=schema.get("streams", []), key=f"str_{box_id}")
+        with col3:
+            if schema.get("has_subject"):
+                subject_val = st.selectbox("Subject", options=schema.get("subjects", []), key=f"sub_{box_id}")
+        with col4:
+            offerings = st.multiselect("Offerings", options=schema.get("offerings", []), key=f"off_{box_id}")
+            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            
+        main_title = exam
+        if mode == "Combo (Individual)":
             sub_title = "All Combos"
             
         courses.append({
-            "is_split": False,
-            "main_title": main_title.strip(), 
-            "sub_title": sub_title.strip(),
-            "stream": stream.strip(),
-            "subject": subject.strip(), 
-            "offerings": offerings
+            "is_split": False, "main_title": main_title.strip(), "sub_title": sub_title.strip(),
+            "stream": stream_val.strip(), "subject": subject_val.strip(), "offerings": offerings
         })
-        
-    else:
-        st.markdown("↳ *Left Side (Individual Exam)*")
+
+    elif mode == "Single Subject":
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            subj_title = st.selectbox("Select Subject", options=st.session_state.config["SUBJECTS_LIST"], key=f"subjmode_{box_id}")
+        with col2:
+            target_exam = st.selectbox("Target Exam (Subtitle)", options=[""] + st.session_state.config["SECTORS"] + list(st.session_state.config["EXAMS_SCHEMA"].keys()), key=f"target_{box_id}", help="Leave blank if none")
+        with col4:
+            offerings = st.multiselect("Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"], key=f"off_{box_id}")
+            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            
+        courses.append({
+            "is_split": False, "main_title": subj_title.strip(), "sub_title": target_exam.strip(),
+            "stream": "", "subject": "", "offerings": offerings
+        })
+
+    elif mode == "Sector":
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            sector = st.selectbox("Select Sector", options=st.session_state.config["SECTORS"], key=f"sec_{box_id}")
+        with col4:
+            offerings = st.multiselect("Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"], key=f"off_{box_id}")
+            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            
+        sub_t = "SBI + IBPS + RRB<br>(PO + CLERK)" if sector == "Banking Exams" else ""
+        courses.append({
+            "is_split": False, "main_title": sector.strip(), "sub_title": sub_t,
+            "stream": "", "subject": "", "offerings": offerings
+        })
+
+    elif mode == "Combo (Individual + Sector)":
+        st.markdown("↳ *Left Side (Exam)*")
         c1, c2, c3, c4 = st.columns(4)
         with c1:
-            ex1 = st.selectbox("Exam", options=st.session_state.config["EXAMS"], key=f"ex1_{box_id}")
+            ex1 = st.selectbox("Exam", options=list(st.session_state.config["EXAMS_SCHEMA"].keys()), key=f"ex1_{box_id}")
+        schema1 = st.session_state.config["EXAMS_SCHEMA"].get(ex1, {})
+        str1 = ""; sub1 = ""
         with c2:
-            str1 = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str1_{box_id}")
+            if schema1.get("has_stream"): str1 = st.selectbox("Stream", options=schema1.get("streams", []), key=f"str1_{box_id}")
         with c3:
-            sub1 = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub1_{box_id}")
+            if schema1.get("has_subject"): sub1 = st.selectbox("Subject", options=schema1.get("subjects", []), key=f"sub1_{box_id}")
         with c4:
-            off1 = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off1_{box_id}")
+            off1 = st.multiselect("Offerings", options=schema1.get("offerings", []), key=f"off1_{box_id}")
 
         st.markdown("↳ *Right Side (Sector)*")
         c5, c6, c7, c8 = st.columns(4)
         with c5:
-            ex2 = st.selectbox("Sector", options=["Bank Exams"], key=f"ex2_{box_id}")
-        with c6:
-            str2 = st.selectbox("Stream", options=st.session_state.config["STREAMS"], key=f"str2_{box_id}")
-        with c7:
-            sub2 = st.selectbox("Subject", options=st.session_state.config["SUBJECTS"], key=f"sub2_{box_id}")
+            ex2 = st.selectbox("Sector", options=st.session_state.config["SECTORS"], key=f"ex2_{box_id}")
         with c8:
-            off2 = st.multiselect("Offerings", options=st.session_state.config["OFFERINGS"], default=[], max_selections=4, key=f"off2_{box_id}")
-            st.write("&nbsp;") 
-            if len(st.session_state.boxes) > 1:
-                st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
+            off2 = st.multiselect("Offerings", options=st.session_state.config["GLOBAL_OFFERINGS"], key=f"off2_{box_id}")
+            if len(st.session_state.boxes) > 1: st.button("❌ Remove Box", key=f"del_{box_id}", on_click=remove_box, args=(box_id,))
         
-        ex2_sub = "SBI + IBPS + RRB<br>(PO + CLERK)" if ex2 == "Bank Exams" else ""
-        
+        ex2_sub = "SBI + IBPS + RRB<br>(PO + CLERK)" if ex2 == "Banking Exams" else ""
         courses.append({
-            "is_split": True,
-            "exam1_title": ex1.strip(),
-            "exam1_sub": "",
-            "stream1": str1.strip(),
-            "subj1": sub1.strip(),
-            "offer1": off1,
-            "exam2_title": ex2.strip(),
-            "exam2_sub": ex2_sub,
-            "stream2": str2.strip(),
-            "subj2": sub2.strip(),
-            "offer2": off2
+            "is_split": True, "exam1_title": ex1.strip(), "exam1_sub": "",
+            "stream1": str1.strip(), "subj1": sub1.strip(), "offer1": off1,
+            "exam2_title": ex2.strip(), "exam2_sub": ex2_sub,
+            "stream2": "", "subj2": "", "offer2": off2
         })
     st.write("---")
 
@@ -255,7 +293,7 @@ if len(st.session_state.boxes) < 6:
 
 st.divider()
 
-# --- SECTION 3: Engine Execution & Text Generation ---
+# --- SECTION 3: Engine Execution ---
 if st.button("Initialize Asset Generation", type="primary", use_container_width=True):
     if len(validity_dates) < 2:
         st.error("Action Required: Please select both a Start Date and End Date.")
@@ -340,7 +378,6 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                                 combined_offs.append(o)
                         offer_str = " | ".join(combined_offs)
                     else:
-                        # THE FIX: Smart Fallback Logic
                         if c.get('main_title'):
                             title = c['main_title']
                         elif c.get('subject'):
