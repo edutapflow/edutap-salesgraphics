@@ -275,12 +275,10 @@ for i, box_id in enumerate(st.session_state.boxes):
     offerings = []
     
     if mode in ["Single Exam", "Combo (Individual)"]:
-        # Pre-fetch the currently selected exam from session state to determine column count
         exam_key = f"ex_{box_id}"
         current_exam = st.session_state.get(exam_key, None)
         schema = st.session_state.config["EXAMS_SCHEMA"].get(current_exam, {}) if current_exam else {}
         
-        # Dynamic Column Generation (Fixes the red gap)
         num_cols = 2
         if schema.get("has_stream"): num_cols += 1
         if schema.get("has_subject"): num_cols += 1
@@ -294,12 +292,12 @@ for i, box_id in enumerate(st.session_state.boxes):
         
         if schema.get("has_stream"):
             with cols[c_idx]:
-                stream_val = st.selectbox("Stream", options=schema.get("streams", []), index=None, key=f"str_{box_id}")
+                stream_val = st.selectbox("Stream (Optional)", options=schema.get("streams", []), index=None, key=f"str_{box_id}", help="Skip if this package is for all streams.")
             c_idx += 1
             
         if schema.get("has_subject"):
             with cols[c_idx]:
-                subject_val = st.multiselect("Subjects", options=schema.get("subjects", []), key=f"sub_{box_id}")
+                subject_val = st.multiselect("Subjects (Optional)", options=schema.get("subjects", []), key=f"sub_{box_id}", help="Leave blank for comprehensive packages. Select only for subject-specific courses.")
             c_idx += 1
             
         with cols[c_idx]:
@@ -361,12 +359,12 @@ for i, box_id in enumerate(st.session_state.boxes):
         
         if schema.get("has_stream"):
             with cols[c_idx]:
-                stream_val = st.selectbox("Stream", options=schema.get("streams", []), index=None, key=f"sec_str_{box_id}")
+                stream_val = st.selectbox("Stream (Optional)", options=schema.get("streams", []), index=None, key=f"sec_str_{box_id}", help="Skip if this package is for all streams.")
             c_idx += 1
             
         if schema.get("has_subject"):
             with cols[c_idx]:
-                subject_val = st.multiselect("Subjects", options=schema.get("subjects", []), key=f"sec_sub_{box_id}")
+                subject_val = st.multiselect("Subjects (Optional)", options=schema.get("subjects", []), key=f"sec_sub_{box_id}", help="Leave blank for comprehensive packages. Select only for subject-specific courses.")
             c_idx += 1
             
         with cols[c_idx]:
@@ -407,12 +405,12 @@ for i, box_id in enumerate(st.session_state.boxes):
         
         str1 = ""
         if sch1.get("has_stream"):
-            with c1[i1]: str1 = st.selectbox("Stream", options=sch1.get("streams", []), index=None, key=f"str1_{box_id}")
+            with c1[i1]: str1 = st.selectbox("Stream (Optional)", options=sch1.get("streams", []), index=None, key=f"str1_{box_id}", help="Skip if this package is for all streams.")
             i1 += 1
             
         sub1_list = []
         if sch1.get("has_subject"):
-            with c1[i1]: sub1_list = st.multiselect("Subjects", options=sch1.get("subjects", []), key=f"sub1_{box_id}")
+            with c1[i1]: sub1_list = st.multiselect("Subjects (Optional)", options=sch1.get("subjects", []), key=f"sub1_{box_id}", help="Leave blank for comprehensive packages. Select only for subject-specific courses.")
             i1 += 1
             
         with c1[i1]:
@@ -442,12 +440,12 @@ for i, box_id in enumerate(st.session_state.boxes):
         
         str2 = ""
         if sch2.get("has_stream"):
-            with c2[i2]: str2 = st.selectbox("Stream", options=sch2.get("streams", []), index=None, key=f"str2_{box_id}")
+            with c2[i2]: str2 = st.selectbox("Stream (Optional)", options=sch2.get("streams", []), index=None, key=f"str2_{box_id}", help="Skip if this package is for all streams.")
             i2 += 1
             
         sub2_list = []
         if sch2.get("has_subject"):
-            with c2[i2]: sub2_list = st.multiselect("Subjects", options=sch2.get("subjects", []), key=f"sub2_{box_id}")
+            with c2[i2]: sub2_list = st.multiselect("Subjects (Optional)", options=sch2.get("subjects", []), key=f"sub2_{box_id}", help="Leave blank for comprehensive packages. Select only for subject-specific courses.")
             i2 += 1
             
         with c2[i2]:
