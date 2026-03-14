@@ -22,8 +22,7 @@ from playwright.sync_api import sync_playwright
 APP_CONFIG = {
     "CAMPAIGNS": ["Super Sale", "Maha Sale", "Flash Sale", "Wow Sale"],
     "GLOBAL_OFFERINGS": [
-        "Gold Course", "Silver Course", "Gold Package", "Silver Package", 
-        "Test Series", "Crash Course", "Master Course", "Live Crash Course", 
+        "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", "Live Crash Course", 
         "Special Subjects", "Special Subject Course", "Super Crash Course", 
         "Banker's Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"
     ],
@@ -35,7 +34,7 @@ APP_CONFIG = {
         "Banking Exams": {
             "subtitle": "SBI + IBPS + RRB<br>(PO + CLERK)",
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [],
-            "offerings": ["Mahapack", "Combo", "Test Series"],
+            "offerings": "Mahapack",
             "offerings_without_subject": ["Mahapack", "Combo", "Test Series"],
             "offerings_with_subject": ["Mahapack", "Combo", "Test Series"]
         }
@@ -43,31 +42,31 @@ APP_CONFIG = {
     "EXAMS_SCHEMA": {
         "RBI Grade A/B": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]
+            "offerings": ["Test Series", "Gold Package", "Silver Package", "Crash Course"]
         },
         "RBI Grade B": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course", "Gold Package", "Silver Package"]
+            "offerings": ["Test Series", "Crash Course", "Gold Package", "Silver Package"]
         },
         "SEBI Grade A": {
             "has_stream": True, "has_subject": False, "streams": ["General Stream"], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]
+            "offerings": ["Test Series", "Gold Package", "Silver Package", "Crash Course"]
         },
         "NABARD Grade A": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]
+            "offerings": ["Test Series", "Gold Package", "Silver Package", "Crash Course"]
         },
         "IRDAI Grade A": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]
+            "offerings": ["Test Series", "Gold Package", "Silver Package", "Crash Course"]
         },
         "PFRDA Grade A": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]
+            "offerings": ["Test Series", "Gold Package", "Silver Package", "Crash Course"]
         },
         "IFSCA Grade A": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Gold Course", "Silver Course", "Crash Course"]
+            "offerings": ["Test Series", "Gold Package", "Silver Package", "Crash Course"]
         },
         "UPSC CSAT": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
