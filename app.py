@@ -553,12 +553,15 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                 course_lines = []
                 for c in courses:
                     if c.get("is_split"):
-                        title = f"{c['exam1_title']} + {c['exam2_title']}"
-                        combined_offs = []
-                        for o in c['offer1'] + c['offer2']:
-                            if o not in combined_offs:
-                                combined_offs.append(o)
-                        offer_str = " | ".join(combined_offs)
+                        exam1 = c.get('exam1_title', '')
+                        off1_str = " | ".join(c.get('offer1', []))
+                        part1 = f"{exam1} ({off1_str})" if off1_str else exam1
+                        
+                        exam2 = c.get('exam2_title', '')
+                        off2_str = " | ".join(c.get('offer2', []))
+                        part2 = f"{exam2} ({off2_str})" if off2_str else exam2
+                        
+                        course_lines.append(f"✅ {part1} + {part2}")
                     else:
                         if c.get('main_title'):
                             title = c['main_title']
@@ -569,12 +572,15 @@ if st.button("Initialize Asset Generation", type="primary", use_container_width=
                         else:
                             title = "Course"
                             
+                        if c.get('sub_title') == "All Combos":
+                            title = f"{title} All Combos"
+                            
                         offer_str = " | ".join(c['offerings'])
                         
-                    if offer_str:
-                        course_lines.append(f"✅ {title}: {offer_str}")
-                    else:
-                        course_lines.append(f"✅ {title}")
+                        if offer_str:
+                            course_lines.append(f"✅ {title}: {offer_str}")
+                        else:
+                            course_lines.append(f"✅ {title}")
                         
                 course_list_str = "\n".join(course_lines)
                 
