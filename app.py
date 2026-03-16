@@ -22,7 +22,7 @@ from playwright.sync_api import sync_playwright
 APP_CONFIG = {
     "CAMPAIGNS": ["Super Sale", "Maha Sale", "Flash Sale", "Wow Sale"],
     "GLOBAL_OFFERINGS": [
-        "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", "Live Crash Course", 
+        "Gold Package", "Silver Package", "Test Series", "Crash Course", "Master Course", "Crash Course", 
         "Special Subjects", "Special Subject Course", "Super Crash Course", 
         "Banker's Capsule Course", "Mahapack", "Combo", "Quick Revision Batch"
     ],
@@ -70,7 +70,7 @@ APP_CONFIG = {
         },
         "UPSC CSAT": {
             "has_stream": False, "has_subject": False, "streams": [], "subjects": [], 
-            "offerings": ["Test Series", "Master Course", "Live Crash Course"]
+            "offerings": ["Test Series", "Master Course", "Crash Course"]
         },
         "UPSC EPFO APFC & EO/AO": {
             "has_stream": False, "has_subject": True, "streams": [], 
